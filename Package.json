@@ -1,0 +1,13 @@
+{
+  "name": "buong-gi-ban",
+  "version": "1.0.0",
+  "description": "Game mô phỏng kinh doanh Buôn Gì Bán Nấy 3D",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "ws": "^8.18.0"
+  }
+}
