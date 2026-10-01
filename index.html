@@ -1,0 +1,1955 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+
+<title>Buôn Gì Bán Nấy 3D</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    user-select:none;
+    -webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#111;
+    font-family:Arial,sans-serif;
+}
+
+button,input,select{
+    font:inherit;
+}
+
+#game{
+    position:fixed;
+    inset:0;
+}
+
+canvas{
+    display:block;
+}
+
+#login{
+    position:fixed;
+    inset:0;
+    z-index:100;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(135deg,#07111f,#164b70,#07111f);
+}
+
+.login-box{
+    width:90%;
+    max-width:380px;
+    padding:28px;
+    border-radius:20px;
+    background:#07111fee;
+    color:white;
+    text-align:center;
+    box-shadow:0 20px 60px #000;
+}
+
+.login-box h1{
+    font-size:26px;
+    margin-bottom:8px;
+}
+
+.login-box p{
+    color:#a9bdd0;
+    font-size:12px;
+    margin-bottom:20px;
+}
+
+.login-box input,
+.login-box select{
+    width:100%;
+    height:45px;
+    margin-top:10px;
+    padding:0 12px;
+    border:0;
+    border-radius:9px;
+    outline:none;
+}
+
+.login-box button{
+    width:100%;
+    height:46px;
+    margin-top:15px;
+    border:0;
+    border-radius:9px;
+    color:white;
+    font-weight:bold;
+    background:#ff8500;
+}
+
+#hud{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:10;
+    pointer-events:none;
+    color:white;
+}
+
+.panel{
+    background:#06101ddd;
+    border:1px solid #ffffff22;
+    border-radius:13px;
+    box-shadow:0 8px 30px #0008;
+}
+
+#stats{
+    position:absolute;
+    left:8px;
+    top:8px;
+    padding:10px;
+    min-width:190px;
+    font-size:12px;
+}
+
+.row{
+    margin:5px 0;
+}
+
+.money{
+    color:#ffd43b;
+    font-weight:bold;
+}
+
+.bar{
+    display:inline-block;
+    width:70px;
+    height:6px;
+    margin:0 5px;
+    overflow:hidden;
+    border-radius:10px;
+    background:#ffffff22;
+}
+
+.fill{
+    width:100%;
+    height:100%;
+    background:#31d17c;
+}
+
+#energy-fill{
+    background:#28aaff;
+}
+
+#hunger-fill{
+    background:#ff9d3d;
+}
+
+#clock{
+    position:absolute;
+    right:8px;
+    top:8px;
+    padding:10px;
+    text-align:right;
+    font-size:11px;
+}
+
+#clock-time{
+    font-size:18px;
+    font-weight:bold;
+}
+
+#weather{
+    color:#ffd43b;
+    margin-top:3px;
+}
+
+#buttons{
+    position:absolute;
+    right:8px;
+    bottom:8px;
+    width:220px;
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:6px;
+    pointer-events:auto;
+}
+
+.game-btn{
+    min-height:40px;
+    border:1px solid #ffffff22;
+    border-radius:9px;
+    color:white;
+    background:#071522dd;
+    font-size:10px;
+    font-weight:bold;
+}
+
+.game-btn:active{
+    transform:scale(.95);
+}
+
+.orange{
+    background:#e97800;
+}
+
+.blue{
+    background:#086dcc;
+}
+
+.green{
+    background:#168c50;
+}
+
+#joystick{
+    position:absolute;
+    left:15px;
+    bottom:20px;
+    width:110px;
+    height:110px;
+    border:2px solid #ffffff22;
+    border-radius:50%;
+    background:#ffffff12;
+    pointer-events:auto;
+    touch-action:none;
+}
+
+#stick{
+    position:absolute;
+    left:31px;
+    top:31px;
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    background:#ffffffaa;
+}
+
+#chat{
+    position:absolute;
+    left:135px;
+    bottom:8px;
+    width:180px;
+    height:125px;
+    padding:7px;
+    border-radius:10px;
+    background:#0009;
+    pointer-events:auto;
+}
+
+#messages{
+    height:88px;
+    overflow:auto;
+    color:white;
+    font-size:10px;
+}
+
+#chat-input{
+    width:100%;
+    height:25px;
+    border:0;
+    outline:0;
+    padding:0 7px;
+    border-radius:5px;
+    background:#ffffff22;
+    color:white;
+}
+
+#notify{
+    position:fixed;
+    z-index:200;
+    top:70px;
+    left:50%;
+    transform:translateX(-50%);
+    display:none;
+    max-width:90%;
+    padding:10px 16px;
+    border-radius:20px;
+    background:#07111fee;
+    border:2px solid #32d17a;
+    color:white;
+    font-size:12px;
+    font-weight:bold;
+}
+
+#status{
+    position:fixed;
+    z-index:50;
+    left:50%;
+    bottom:2px;
+    transform:translateX(-50%);
+    color:#ffffffaa;
+    font-size:9px;
+}
+
+.modal{
+    position:fixed;
+    z-index:150;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    display:none;
+    width:92%;
+    max-width:500px;
+    max-height:80vh;
+    overflow:auto;
+    padding:15px;
+    border-radius:16px;
+    background:#07111ff5;
+    color:white;
+    box-shadow:0 20px 70px #000;
+}
+
+.modal-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:12px;
+    padding-bottom:10px;
+    border-bottom:1px solid #ffffff22;
+}
+
+.modal-head h2{
+    color:#ffae2d;
+    font-size:17px;
+}
+
+.close{
+    font-size:25px;
+    color:#aaa;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:7px;
+}
+
+.card{
+    padding:10px;
+    border-radius:9px;
+    background:#ffffff0d;
+    border:1px solid #ffffff12;
+    font-size:11px;
+}
+
+.card small{
+    display:block;
+    color:#9baabb;
+    margin-top:4px;
+}
+
+.card button{
+    width:100%;
+    height:30px;
+    margin-top:7px;
+    border:0;
+    border-radius:6px;
+    color:white;
+    background:#168b50;
+    font-size:10px;
+}
+
+@media(max-width:600px){
+
+    #stats{
+        min-width:160px;
+        font-size:10px;
+    }
+
+    #buttons{
+        width:195px;
+    }
+
+    #chat{
+        left:125px;
+        width:170px;
+    }
+
+}
+</style>
+</head>
+
+<body>
+
+<div id="game"></div>
+
+<div id="login">
+
+    <div class="login-box">
+
+        <h1>BUÔN GÌ BÁN NẤY</h1>
+
+        <p>3D MULTIPLAYER CITY</p>
+
+        <input
+            id="name"
+            maxlength="20"
+            value="Trader"
+            placeholder="Tên nhân vật"
+        >
+
+        <select id="gender">
+            <option value="male">Nam</option>
+            <option value="female">Nữ</option>
+        </select>
+
+        <button onclick="joinGame()">
+            VÀO THÀNH PHỐ
+        </button>
+
+    </div>
+
+</div>
+
+<div id="notify"></div>
+
+<div id="status">
+    Chưa kết nối
+</div>
+
+<div id="hud">
+
+    <div id="stats" class="panel">
+
+        <div class="row">
+            👤 <b id="pname">Player</b>
+        </div>
+
+        <div class="row">
+            💼 <span id="job">Tự do</span>
+        </div>
+
+        <div class="row">
+            💰 <span class="money" id="money">1000</span> $
+        </div>
+
+        <div class="row">
+            ⚡
+            <span class="bar">
+                <span id="energy-fill" class="fill"></span>
+            </span>
+            <span id="energy">100</span>
+        </div>
+
+        <div class="row">
+            🍖
+            <span class="bar">
+                <span id="hunger-fill" class="fill"></span>
+            </span>
+            <span id="hunger">100</span>
+        </div>
+
+    </div>
+
+    <div id="clock" class="panel">
+
+        <div id="clock-time">
+            08:00
+        </div>
+
+        <div id="clock-day">
+            Ngày 1
+        </div>
+
+        <div id="weather">
+            ☀️ Nắng
+        </div>
+
+    </div>
+
+    <div id="joystick">
+
+        <div id="stick"></div>
+
+    </div>
+
+    <div id="chat">
+
+        <div id="messages"></div>
+
+        <input
+            id="chat-input"
+            maxlength="300"
+            placeholder="Chat..."
+        >
+
+    </div>
+
+    <div id="buttons">
+
+        <button
+            class="game-btn orange"
+            onclick="toggleBike()"
+        >
+            🛵 Xe máy
+        </button>
+
+        <button
+            class="game-btn"
+            onclick="openModal('inventory')"
+        >
+            🎒 Túi đồ
+        </button>
+
+        <button
+            class="game-btn"
+            onclick="openModal('market')"
+        >
+            🛒 Thị trường
+        </button>
+
+        <button
+            class="game-btn"
+            onclick="openModal('jobmodal')"
+        >
+            💼 Nghề
+        </button>
+
+        <button
+            class="game-btn green"
+            onclick="eat()"
+        >
+            🍜 Ăn
+        </button>
+
+        <button
+            class="game-btn blue"
+            onclick="drink()"
+        >
+            🥤 Uống
+        </button>
+
+        <button
+            class="game-btn"
+            onclick="interact()"
+        >
+            💬 Tương tác
+        </button>
+
+        <button
+            class="game-btn"
+            onclick="callTaxi()"
+        >
+            🚕 Taxi
+        </button>
+
+        <button
+            class="game-btn"
+            onclick="hotel()"
+        >
+            🏨 Khách sạn
+        </button>
+
+    </div>
+
+</div>
+
+<div id="inventory" class="modal">
+
+    <div class="modal-head">
+        <h2>🎒 TÚI ĐỒ</h2>
+        <span class="close" onclick="closeModals()">×</span>
+    </div>
+
+    <div id="inventory-list" class="grid"></div>
+
+</div>
+
+<div id="market" class="modal">
+
+    <div class="modal-head">
+        <h2>🛒 THỊ TRƯỜNG</h2>
+        <span class="close" onclick="closeModals()">×</span>
+    </div>
+
+    <div id="market-list" class="grid"></div>
+
+</div>
+
+<div id="jobmodal" class="modal">
+
+    <div class="modal-head">
+        <h2>💼 NGHỀ NGHIỆP</h2>
+        <span class="close" onclick="closeModals()">×</span>
+    </div>
+
+    <div id="job-list" class="grid"></div>
+
+</div>
+
+<script>
+
+"use strict";
+
+let ws = null;
+let myId = null;
+
+let state = {
+    world:{
+        day:1,
+        time:8,
+        weather:"sunny"
+    },
+    players:{},
+    market:{}
+};
+
+let scene;
+let camera;
+let renderer;
+
+let playerMeshes = {};
+
+let keys = {
+    w:false,
+    a:false,
+    s:false,
+    d:false,
+    ArrowUp:false,
+    ArrowDown:false,
+    ArrowLeft:false,
+    ArrowRight:false
+};
+
+let joystick = {
+    active:false,
+    x:0,
+    y:0
+};
+
+let lastMove = 0;
+
+function send(data){
+
+    if(
+        ws &&
+        ws.readyState === WebSocket.OPEN
+    ){
+
+        ws.send(
+            JSON.stringify(data)
+        );
+
+    }
+
+}
+
+function action(name,extra={}){
+
+    send({
+        type:"ACTION",
+        action:name,
+        ...extra
+    });
+
+}
+
+function notify(text,ok=true){
+
+    const box =
+        document.getElementById("notify");
+
+    box.textContent = text;
+
+    box.style.borderColor =
+        ok ? "#32d17a" : "#ff4545";
+
+    box.style.display = "block";
+
+    clearTimeout(notify.timer);
+
+    notify.timer =
+        setTimeout(()=>{
+            box.style.display = "none";
+        },2500);
+
+}
+
+function joinGame(){
+
+    const name =
+        document
+        .getElementById("name")
+        .value
+        .trim() ||
+        "Trader";
+
+    const gender =
+        document
+        .getElementById("gender")
+        .value;
+
+    const protocol =
+        location.protocol === "https:"
+        ? "wss:"
+        : "ws:";
+
+    ws = new WebSocket(
+        protocol +
+        "//" +
+        location.host
+    );
+
+    document.getElementById(
+        "status"
+    ).textContent =
+        "🟡 Đang kết nối...";
+
+    ws.onopen = ()=>{
+
+        send({
+            type:"JOIN",
+            name,
+            gender
+        });
+
+    };
+
+    ws.onmessage = event=>{
+
+        let data;
+
+        try{
+            data =
+                JSON.parse(
+                    event.data
+                );
+        }catch{
+            return;
+        }
+
+        handleMessage(data);
+
+    };
+
+    ws.onclose = ()=>{
+
+        document.getElementById(
+            "status"
+        ).textContent =
+            "🔴 Mất kết nối";
+
+        notify(
+            "Mất kết nối server.",
+            false
+        );
+
+    };
+
+    ws.onerror = ()=>{
+
+        notify(
+            "Không kết nối được server.",
+            false
+        );
+
+    };
+
+}
+
+function handleMessage(data){
+
+    if(data.type === "INIT"){
+
+        myId = data.id;
+
+        state = data.state;
+
+        document.getElementById(
+            "login"
+        ).style.display = "none";
+
+        document.getElementById(
+            "hud"
+        ).style.display = "block";
+
+        document.getElementById(
+            "status"
+        ).textContent =
+            "🟢 Đã kết nối";
+
+        init3D();
+
+        updateAll();
+
+        return;
+    }
+
+    if(data.type === "TICK"){
+
+        state = data.state;
+
+        updateAll();
+
+        return;
+    }
+
+    if(data.type === "CHAT_MSG"){
+
+        addChat(
+            data.sender,
+            data.text
+        );
+
+        return;
+    }
+
+    if(data.type === "SYSTEM"){
+
+        addChat(
+            "HỆ THỐNG",
+            data.text
+        );
+
+        return;
+    }
+
+    if(data.type === "NOTIF"){
+
+        notify(
+            data.text,
+            data.success !== false
+        );
+
+        return;
+    }
+
+}
+
+function init3D(){
+
+    scene =
+        new THREE.Scene();
+
+    scene.background =
+        new THREE.Color(
+            0x79bde5
+        );
+
+    scene.fog =
+        new THREE.Fog(
+            0x79bde5,
+            40,
+            220
+        );
+
+    camera =
+        new THREE.PerspectiveCamera(
+            60,
+            innerWidth / innerHeight,
+            .1,
+            500
+        );
+
+    camera.position.set(
+        0,
+        8,
+        12
+    );
+
+    renderer =
+        new THREE.WebGLRenderer({
+            antialias:true,
+            powerPreference:"high-performance"
+        });
+
+    renderer.setSize(
+        innerWidth,
+        innerHeight
+    );
+
+    renderer.setPixelRatio(
+        Math.min(
+            devicePixelRatio,
+            1.5
+        )
+    );
+
+    document
+        .getElementById("game")
+        .appendChild(
+            renderer.domElement
+        );
+
+    const ambient =
+        new THREE.AmbientLight(
+            0xffffff,
+            .7
+        );
+
+    scene.add(ambient);
+
+    const light =
+        new THREE.DirectionalLight(
+            0xffffff,
+            1
+        );
+
+    light.position.set(
+        50,
+        100,
+        50
+    );
+
+    scene.add(light);
+
+    createWorld();
+
+    setupInput();
+
+    animate();
+
+}
+
+function createWorld(){
+
+    const ground =
+        new THREE.Mesh(
+
+            new THREE.PlaneGeometry(
+                250,
+                250
+            ),
+
+            new THREE.MeshStandardMaterial({
+                color:0x3c8548
+            })
+
+        );
+
+    ground.rotation.x =
+        -Math.PI / 2;
+
+    scene.add(ground);
+
+    createRoad(
+        0,
+        0,
+        250,
+        14
+    );
+
+    createRoad(
+        0,
+        0,
+        14,
+        250
+    );
+
+    for(
+        let i=0;
+        i<35;
+        i++
+    ){
+
+        const x =
+            Math.random()*220-110;
+
+        const z =
+            Math.random()*220-110;
+
+        if(
+            Math.abs(x)<12 ||
+            Math.abs(z)<12
+        ){
+            continue;
+        }
+
+        createBuilding(
+            x,
+            z
+        );
+
+    }
+
+    for(
+        let i=0;
+        i<70;
+        i++
+    ){
+
+        createTree(
+            Math.random()*230-115,
+            Math.random()*230-115
+        );
+
+    }
+
+}
+
+function createRoad(
+    x,
+    z,
+    w,
+    d
+){
+
+    const road =
+        new THREE.Mesh(
+
+            new THREE.PlaneGeometry(
+                w,
+                d
+            ),
+
+            new THREE.MeshStandardMaterial({
+                color:0x30343a
+            })
+
+        );
+
+    road.rotation.x =
+        -Math.PI / 2;
+
+    road.position.set(
+        x,
+        .02,
+        z
+    );
+
+    scene.add(road);
+
+}
+
+function createBuilding(
+    x,
+    z
+){
+
+    const h =
+        5 +
+        Math.random()*12;
+
+    const building =
+        new THREE.Mesh(
+
+            new THREE.BoxGeometry(
+                7,
+                h,
+                7
+            ),
+
+            new THREE.MeshStandardMaterial({
+                color:
+                    new THREE.Color(
+                        Math.random()*.3+.25,
+                        Math.random()*.3+.25,
+                        Math.random()*.3+.3
+                    )
+            })
+
+        );
+
+    building.position.set(
+        x,
+        h/2,
+        z
+    );
+
+    scene.add(building);
+
+}
+
+function createTree(
+    x,
+    z
+){
+
+    const trunk =
+        new THREE.Mesh(
+
+            new THREE.CylinderGeometry(
+                .2,
+                .3,
+                1.5,
+                8
+            ),
+
+            new THREE.MeshStandardMaterial({
+                color:0x70452a
+            })
+
+        );
+
+    trunk.position.set(
+        x,
+        .75,
+        z
+    );
+
+    scene.add(trunk);
+
+    const crown =
+        new THREE.Mesh(
+
+            new THREE.SphereGeometry(
+                1.1,
+                10,
+                8
+            ),
+
+            new THREE.MeshStandardMaterial({
+                color:0x1f783e
+            })
+
+        );
+
+    crown.position.set(
+        x,
+        2,
+        z
+    );
+
+    scene.add(crown);
+
+}
+
+function createPlayer(
+    player
+){
+
+    const group =
+        new THREE.Group();
+
+    const body =
+        new THREE.Mesh(
+
+            new THREE.BoxGeometry(
+                .8,
+                1.3,
+                .5
+            ),
+
+            new THREE.MeshStandardMaterial({
+                color:
+                    player.gender === "female"
+                    ? 0xd94783
+                    : 0x287bd0
+            })
+
+        );
+
+    body.position.y =
+        1;
+
+    group.add(body);
+
+    const head =
+        new THREE.Mesh(
+
+            new THREE.SphereGeometry(
+                .32,
+                12,
+                10
+            ),
+
+            new THREE.MeshStandardMaterial({
+                color:0xffc89e
+            })
+
+        );
+
+    head.position.y =
+        1.9;
+
+    group.add(head);
+
+    group.position.set(
+        player.x,
+        player.y,
+        player.z
+    );
+
+    scene.add(group);
+
+    return group;
+
+}
+
+function updatePlayers(){
+
+    const players =
+        state.players || {};
+
+    Object.keys(
+        playerMeshes
+    ).forEach(id=>{
+
+        if(!players[id]){
+
+            scene.remove(
+                playerMeshes[id]
+            );
+
+            delete playerMeshes[id];
+
+        }
+
+    });
+
+    Object.entries(
+        players
+    ).forEach(
+        ([id,player])=>{
+
+            if(
+                !playerMeshes[id]
+            ){
+
+                playerMeshes[id] =
+                    createPlayer(
+                        player
+                    );
+
+            }
+
+            const mesh =
+                playerMeshes[id];
+
+            mesh.position.set(
+                player.x,
+                player.y,
+                player.z
+            );
+
+            mesh.rotation.y =
+                player.rot || 0;
+
+        }
+    );
+
+}
+
+function updateMovement(){
+
+    if(
+        !myId ||
+        !state.players[myId]
+    ){
+        return;
+    }
+
+    const player =
+        state.players[myId];
+
+    let x = 0;
+    let z = 0;
+
+    if(keys.w || keys.ArrowUp) z--;
+    if(keys.s || keys.ArrowDown) z++;
+    if(keys.a || keys.ArrowLeft) x--;
+    if(keys.d || keys.ArrowRight) x++;
+
+    if(
+        Math.abs(joystick.x)>.05 ||
+        Math.abs(joystick.y)>.05
+    ){
+
+        x = joystick.x;
+        z = joystick.y;
+
+    }
+
+    const length =
+        Math.hypot(x,z);
+
+    if(length < .01){
+        return;
+    }
+
+    x /= length;
+    z /= length;
+
+    const speed =
+        player.onBike
+        ? .34
+        : .15;
+
+    player.x += x*speed;
+    player.z += z*speed;
+
+    player.x =
+        Math.max(
+            -120,
+            Math.min(
+                120,
+                player.x
+            )
+        );
+
+    player.z =
+        Math.max(
+            -120,
+            Math.min(
+                120,
+                player.z
+            )
+        );
+
+    player.rot =
+        Math.atan2(x,z);
+
+    const now =
+        performance.now();
+
+    if(
+        now-lastMove > 60
+    ){
+
+        lastMove = now;
+
+        send({
+            type:"UPDATE_MOVE",
+            x:player.x,
+            y:player.y,
+            z:player.z,
+            rot:player.rot
+        });
+
+    }
+
+}
+
+function updateCamera(){
+
+    if(
+        !myId ||
+        !state.players[myId]
+    ){
+        return;
+    }
+
+    const p =
+        state.players[myId];
+
+    const distance =
+        p.onBike
+        ? 13
+        : 10;
+
+    const height =
+        p.onBike
+        ? 8
+        : 6;
+
+    camera.position.lerp(
+
+        new THREE.Vector3(
+
+            p.x -
+            Math.sin(p.rot || 0) *
+            distance,
+
+            p.y + height,
+
+            p.z -
+            Math.cos(p.rot || 0) *
+            distance
+
+        ),
+
+        .12
+
+    );
+
+    camera.lookAt(
+        p.x,
+        p.y+1,
+        p.z
+    );
+
+}
+
+function updateHUD(){
+
+    const p =
+        state.players[myId];
+
+    if(!p){
+        return;
+    }
+
+    document.getElementById(
+        "pname"
+    ).textContent =
+        p.name;
+
+    document.getElementById(
+        "job"
+    ).textContent =
+        p.job;
+
+    document.getElementById(
+        "money"
+    ).textContent =
+        p.money.toLocaleString();
+
+    document.getElementById(
+        "energy"
+    ).textContent =
+        Math.floor(p.energy);
+
+    document.getElementById(
+        "hunger"
+    ).textContent =
+        Math.floor(p.hunger);
+
+    document.getElementById(
+        "energy-fill"
+    ).style.width =
+        p.energy+"%";
+
+    document.getElementById(
+        "hunger-fill"
+    ).style.width =
+        p.hunger+"%";
+
+    const time =
+        state.world.time;
+
+    const hour =
+        Math.floor(time);
+
+    const minute =
+        Math.floor(
+            (time-hour)*60
+        );
+
+    document.getElementById(
+        "clock-time"
+    ).textContent =
+        String(hour).padStart(2,"0")+
+        ":"+
+        String(minute).padStart(2,"0");
+
+    document.getElementById(
+        "clock-day"
+    ).textContent =
+        "Ngày "+
+        state.world.day;
+
+}
+
+function updateAll(){
+
+    updateHUD();
+
+    updatePlayers();
+
+    refreshInventory();
+
+    refreshMarket();
+
+    refreshJobs();
+
+}
+
+function refreshInventory(){
+
+    const p =
+        state.players[myId];
+
+    if(!p){
+        return;
+    }
+
+    const box =
+        document.getElementById(
+            "inventory-list"
+        );
+
+    box.innerHTML = "";
+
+    Object.entries(
+        p.inventory || {}
+    ).forEach(
+        ([id,quantity])=>{
+
+            const item =
+                state.market[id];
+
+            if(!item){
+                return;
+            }
+
+            box.innerHTML += `
+
+                <div class="card">
+
+                    <b>${item.name}</b>
+
+                    <small>
+                        Số lượng: ${quantity}
+                    </small>
+
+                    <button
+                        onclick="sellItem('${id}')"
+                    >
+                        Bán +$${item.price}
+                    </button>
+
+                </div>
+
+            `;
+
+        }
+    );
+
+}
+
+function refreshMarket(){
+
+    const box =
+        document.getElementById(
+            "market-list"
+        );
+
+    box.innerHTML = "";
+
+    Object.entries(
+        state.market || {}
+    ).forEach(
+        ([id,item])=>{
+
+            box.innerHTML += `
+
+                <div class="card">
+
+                    <b>${item.name}</b>
+
+                    <small>
+                        Giá: $${item.price}
+                    </small>
+
+                    <button
+                        onclick="buyItem('${id}')"
+                    >
+                        Mua
+                    </button>
+
+                </div>
+
+            `;
+
+        }
+    );
+
+}
+
+function refreshJobs(){
+
+    const jobs = [
+        "Tự do",
+        "Nông dân",
+        "Tài xế",
+        "Ngư dân",
+        "Nhân viên cửa hàng",
+        "Thợ sửa xe"
+    ];
+
+    const box =
+        document.getElementById(
+            "job-list"
+        );
+
+    box.innerHTML = "";
+
+    jobs.forEach(job=>{
+
+        box.innerHTML += `
+
+            <div class="card">
+
+                <b>${job}</b>
+
+                <button
+                    onclick="changeJob('${job}')"
+                >
+                    Chọn nghề
+                </button>
+
+            </div>
+
+        `;
+
+    });
+
+}
+
+function openModal(id){
+
+    refreshJobs();
+
+    document.getElementById(
+        id
+    ).style.display =
+        "block";
+
+}
+
+function closeModals(){
+
+    document
+        .querySelectorAll(".modal")
+        .forEach(
+            x=>{
+                x.style.display =
+                    "none";
+            }
+        );
+
+}
+
+function buyItem(id){
+
+    action(
+        "BUY_ITEM",
+        {
+            item:id
+        }
+    );
+
+}
+
+function sellItem(id){
+
+    action(
+        "SELL_ITEM",
+        {
+            item:id
+        }
+    );
+
+}
+
+function changeJob(job){
+
+    action(
+        "CHANGE_JOB",
+        {
+            job
+        }
+    );
+
+}
+
+function toggleBike(){
+
+    action(
+        "TOGGLE_BIKE"
+    );
+
+}
+
+function eat(){
+
+    action("EAT");
+
+}
+
+function drink(){
+
+    action("DRINK");
+
+}
+
+function interact(){
+
+    action("INTERACT");
+
+}
+
+function callTaxi(){
+
+    action("CALL_TAXI");
+
+}
+
+function hotel(){
+
+    action("HOTEL_CHECKIN");
+
+}
+
+function addChat(
+    sender,
+    text
+){
+
+    const box =
+        document.getElementById(
+            "messages"
+        );
+
+    const line =
+        document.createElement(
+            "div"
+        );
+
+    line.textContent =
+        sender +
+        ": " +
+        text;
+
+    box.appendChild(line);
+
+    box.scrollTop =
+        box.scrollHeight;
+
+}
+
+function setupInput(){
+
+    window.addEventListener(
+        "keydown",
+        e=>{
+
+            if(e.key in keys){
+
+                keys[e.key] =
+                    true;
+
+                e.preventDefault();
+
+            }
+
+            if(
+                e.key === "Enter" &&
+                document.activeElement ===
+                document.getElementById(
+                    "chat-input"
+                )
+            ){
+
+                sendChat();
+
+            }
+
+        }
+    );
+
+    window.addEventListener(
+        "keyup",
+        e=>{
+
+            if(e.key in keys){
+
+                keys[e.key] =
+                    false;
+
+                e.preventDefault();
+
+            }
+
+        }
+    );
+
+    const joy =
+        document.getElementById(
+            "joystick"
+        );
+
+    const stick =
+        document.getElementById(
+            "stick"
+        );
+
+    function move(e){
+
+        const rect =
+            joy.getBoundingClientRect();
+
+        const cx =
+            rect.left +
+            rect.width/2;
+
+        const cy =
+            rect.top +
+            rect.height/2;
+
+        let dx =
+            e.clientX-cx;
+
+        let dy =
+            e.clientY-cy;
+
+        const max =
+            rect.width*.34;
+
+        const length =
+            Math.hypot(dx,dy);
+
+        if(length>max){
+
+            dx =
+                dx/length*max;
+
+            dy =
+                dy/length*max;
+
+        }
+
+        joystick.x =
+            dx/max;
+
+        joystick.y =
+            dy/max;
+
+        stick.style.transform =
+            `translate(${dx}px,${dy}px)`;
+
+    }
+
+    function reset(){
+
+        joystick.active =
+            false;
+
+        joystick.x =
+            0;
+
+        joystick.y =
+            0;
+
+        stick.style.transform =
+            "translate(0,0)";
+
+    }
+
+    joy.addEventListener(
+        "pointerdown",
+        e=>{
+
+            joystick.active =
+                true;
+
+            joy.setPointerCapture(
+                e.pointerId
+            );
+
+            move(e);
+
+        }
+    );
+
+    joy.addEventListener(
+        "pointermove",
+        e=>{
+
+            if(
+                joystick.active
+            ){
+
+                move(e);
+
+            }
+
+        }
+    );
+
+    joy.addEventListener(
+        "pointerup",
+        reset
+    );
+
+    joy.addEventListener(
+        "pointercancel",
+        reset
+    );
+
+    document
+        .getElementById(
+            "chat-input"
+        )
+        .addEventListener(
+            "keydown",
+            e=>{
+
+                if(
+                    e.key === "Enter"
+                ){
+
+                    sendChat();
+
+                }
+
+            }
+        );
+
+    window.addEventListener(
+        "resize",
+        ()=>{
+
+            if(!camera || !renderer){
+                return;
+            }
+
+            camera.aspect =
+                innerWidth/
+                innerHeight;
+
+            camera.updateProjectionMatrix();
+
+            renderer.setSize(
+                innerWidth,
+                innerHeight
+            );
+
+        }
+    );
+
+}
+
+function sendChat(){
+
+    const input =
+        document.getElementById(
+            "chat-input"
+        );
+
+    const text =
+        input.value.trim();
+
+    if(!text){
+        return;
+    }
+
+    send({
+        type:"CHAT",
+        text
+    });
+
+    input.value = "";
+
+}
+
+function animate(){
+
+    requestAnimationFrame(
+        animate
+    );
+
+    updateMovement();
+
+    updateCamera();
+
+    if(renderer){
+
+        renderer.render(
+            scene,
+            camera
+        );
+
+    }
+
+}
+
+</script>
+
+</body>
+</html>
