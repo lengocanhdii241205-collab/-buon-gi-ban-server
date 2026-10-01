@@ -1,0 +1,3935 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
+
+  <title>Buông Gì Bán</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #8fd3ff;
+      font-family:
+        Arial,
+        "Segoe UI",
+        sans-serif;
+      touch-action: none;
+    }
+
+    body {
+      color: #fff;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ======================================================
+       LOADING
+    ====================================================== */
+
+    #loading {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background:
+        linear-gradient(
+          180deg,
+          #7dc8ff,
+          #dff6ff
+        );
+      color: #333;
+      text-align: center;
+    }
+
+    #loading h1 {
+      margin: 0 0 10px;
+      font-size: 34px;
+    }
+
+    #loading p {
+      margin: 5px 0;
+    }
+
+    .loading-bar {
+      width: 220px;
+      height: 10px;
+      margin-top: 18px;
+      overflow: hidden;
+      border-radius: 20px;
+      background: #ddd;
+    }
+
+    .loading-progress {
+      width: 40%;
+      height: 100%;
+      border-radius: 20px;
+      background: #4caf50;
+      animation: loading 1.2s infinite;
+    }
+
+    @keyframes loading {
+      from {
+        transform: translateX(-100%);
+      }
+
+      to {
+        transform: translateX(350%);
+      }
+    }
+
+    /* ======================================================
+       LOGIN
+    ====================================================== */
+
+    #login {
+      position: fixed;
+      inset: 0;
+      z-index: 900;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background:
+        linear-gradient(
+          rgba(40, 90, 130, 0.45),
+          rgba(20, 40, 60, 0.7)
+        );
+    }
+
+    .login-box {
+      width: min(420px, 95vw);
+      padding: 28px;
+      border-radius: 24px;
+      background: rgba(255,255,255,.96);
+      color: #222;
+      box-shadow:
+        0 20px 60px rgba(0,0,0,.3);
+      text-align: center;
+    }
+
+    .login-box h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+    }
+
+    .login-box p {
+      color: #666;
+      margin-bottom: 20px;
+    }
+
+    .input {
+      width: 100%;
+      padding: 14px;
+      margin-bottom: 12px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    .gender-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .gender-btn {
+      flex: 1;
+      padding: 12px;
+      border: 0;
+      border-radius: 12px;
+      background: #eee;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .gender-btn.active {
+      background: #76c7ff;
+      color: #fff;
+    }
+
+    .main-btn {
+      width: 100%;
+      padding: 14px;
+      border: 0;
+      border-radius: 14px;
+      background: #ff8c42;
+      color: white;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    /* ======================================================
+       HUD
+    ====================================================== */
+
+    #hud {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      pointer-events: none;
+    }
+
+    #top-left {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .hud-card {
+      min-width: 170px;
+      padding: 9px 13px;
+      border-radius: 14px;
+      background: rgba(20,25,35,.78);
+      backdrop-filter: blur(8px);
+      box-shadow:
+        0 5px 20px rgba(0,0,0,.2);
+    }
+
+    #money {
+      color: #ffe16b;
+      font-weight: bold;
+    }
+
+    #job {
+      color: #a9e8ff;
+    }
+
+    #world-info {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 10px 13px;
+      border-radius: 14px;
+      background: rgba(20,25,35,.78);
+      text-align: right;
+      backdrop-filter: blur(8px);
+    }
+
+    /* ======================================================
+       BUTTONS
+    ====================================================== */
+
+    #buttons {
+      position: absolute;
+      top: 100px;
+      right: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: auto;
+    }
+
+    .hud-btn {
+      width: 52px;
+      height: 52px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(25,30,40,.82);
+      color: #fff;
+      font-size: 23px;
+      cursor: pointer;
+      box-shadow:
+        0 5px 15px rgba(0,0,0,.22);
+    }
+
+    .hud-btn:active {
+      transform: scale(.92);
+    }
+
+    /* ======================================================
+       JOYSTICK
+    ====================================================== */
+
+    #joystick {
+      position: absolute;
+      left: 24px;
+      bottom: 25px;
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.17);
+      border: 2px solid rgba(255,255,255,.3);
+      pointer-events: auto;
+    }
+
+    #joystick-stick {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 58px;
+      height: 58px;
+      margin-left: -29px;
+      margin-top: -29px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.75);
+      box-shadow:
+        0 4px 15px rgba(0,0,0,.2);
+    }
+
+    /* ======================================================
+       ACTION BUTTONS
+    ====================================================== */
+
+    #action-buttons {
+      position: absolute;
+      right: 25px;
+      bottom: 28px;
+      display: flex;
+      gap: 10px;
+      pointer-events: auto;
+    }
+
+    .action-btn {
+      width: 64px;
+      height: 64px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(30,35,45,.82);
+      color: white;
+      font-size: 24px;
+      box-shadow:
+        0 6px 18px rgba(0,0,0,.25);
+    }
+
+    .action-btn:active {
+      transform: scale(.9);
+    }
+
+    /* ======================================================
+       MENU
+    ====================================================== */
+
+    .menu {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 15px;
+      background: rgba(0,0,0,.5);
+    }
+
+    .menu-box {
+      width: min(560px, 96vw);
+      max-height: 88vh;
+      overflow-y: auto;
+      padding: 20px;
+      border-radius: 22px;
+      background: rgba(250,250,250,.98);
+      color: #222;
+      box-shadow:
+        0 20px 70px rgba(0,0,0,.35);
+    }
+
+    .menu-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+
+    .menu-header h2 {
+      margin: 0;
+    }
+
+    .close-btn {
+      width: 38px;
+      height: 38px;
+      border: 0;
+      border-radius: 50%;
+      background: #eee;
+      font-size: 20px;
+    }
+
+    .menu-section {
+      margin-bottom: 18px;
+    }
+
+    .menu-section h3 {
+      margin: 0 0 9px;
+    }
+
+    .item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px;
+      margin-bottom: 8px;
+      border-radius: 13px;
+      background: #f1f1f1;
+    }
+
+    .item-name {
+      font-weight: bold;
+    }
+
+    .item-small {
+      font-size: 12px;
+      color: #777;
+      margin-top: 3px;
+    }
+
+    .small-btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 9px 12px;
+      background: #ff8c42;
+      color: white;
+      font-weight: bold;
+    }
+
+    .green-btn {
+      background: #4caf50;
+    }
+
+    .blue-btn {
+      background: #2196f3;
+    }
+
+    .red-btn {
+      background: #e74c3c;
+    }
+
+    /* ======================================================
+       CHAT
+    ====================================================== */
+
+    #chat-box {
+      position: absolute;
+      left: 12px;
+      bottom: 170px;
+      width: min(330px, 70vw);
+      pointer-events: auto;
+    }
+
+    #chat-messages {
+      max-height: 160px;
+      overflow-y: auto;
+      margin-bottom: 7px;
+    }
+
+    .chat-message {
+      display: block;
+      width: fit-content;
+      max-width: 100%;
+      margin-bottom: 5px;
+      padding: 6px 9px;
+      border-radius: 10px;
+      background: rgba(20,25,35,.72);
+      font-size: 13px;
+    }
+
+    #chat-form {
+      display: flex;
+      gap: 5px;
+    }
+
+    #chat-input {
+      min-width: 0;
+      flex: 1;
+      padding: 10px;
+      border: 0;
+      border-radius: 10px;
+      outline: none;
+    }
+
+    #chat-send {
+      width: 45px;
+      border: 0;
+      border-radius: 10px;
+      background: #ff8c42;
+      color: white;
+    }
+
+    /* ======================================================
+       NOTICE
+    ====================================================== */
+
+    #notices {
+      position: absolute;
+      left: 50%;
+      top: 80px;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      align-items: center;
+    }
+
+    .notice {
+      padding: 10px 16px;
+      border-radius: 12px;
+      background: rgba(20,25,35,.88);
+      animation:
+        noticeIn .2s ease;
+    }
+
+    .notice.success {
+      background: rgba(46,125,50,.92);
+    }
+
+    .notice.error {
+      background: rgba(198,40,40,.92);
+    }
+
+    @keyframes noticeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ======================================================
+       MOBILE
+    ====================================================== */
+
+    @media (max-width: 600px) {
+      #top-left {
+        top: 8px;
+        left: 8px;
+      }
+
+      .hud-card {
+        min-width: 145px;
+        font-size: 13px;
+        padding: 7px 10px;
+      }
+
+      #world-info {
+        top: 8px;
+        right: 8px;
+        font-size: 12px;
+        padding: 8px 10px;
+      }
+
+      #buttons {
+        top: 85px;
+        right: 8px;
+      }
+
+      .hud-btn {
+        width: 46px;
+        height: 46px;
+      }
+
+      #joystick {
+        width: 120px;
+        height: 120px;
+        left: 15px;
+        bottom: 18px;
+      }
+
+      #action-buttons {
+        right: 15px;
+        bottom: 20px;
+      }
+
+      .action-btn {
+        width: 57px;
+        height: 57px;
+      }
+
+      #chat-box {
+        bottom: 155px;
+        left: 8px;
+        width: 62vw;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- ========================================================
+     LOADING
+========================================================= -->
+
+<div id="loading">
+  <h1>🏪 Buông Gì Bán</h1>
+  <p>Đang xây dựng thành phố...</p>
+
+  <div class="loading-bar">
+    <div class="loading-progress"></div>
+  </div>
+</div>
+
+<!-- ========================================================
+     LOGIN
+========================================================= -->
+
+<div id="login">
+  <div class="login-box">
+    <h1>🏪 Buông Gì Bán</h1>
+
+    <p>
+      Thành phố kinh doanh nhiều người chơi
+    </p>
+
+    <input
+      id="player-name"
+      class="input"
+      maxlength="20"
+      placeholder="Tên nhân vật"
+    />
+
+    <div class="gender-row">
+      <button
+        class="gender-btn active"
+        data-gender="male"
+      >
+        👦 Nam
+      </button>
+
+      <button
+        class="gender-btn"
+        data-gender="female"
+      >
+        👧 Nữ
+      </button>
+    </div>
+
+    <button
+      id="play-btn"
+      class="main-btn"
+    >
+      🚀 Vào thành phố
+    </button>
+  </div>
+</div>
+
+<!-- ========================================================
+     GAME HUD
+========================================================= -->
+
+<div id="hud">
+
+  <div id="top-left">
+
+    <div class="hud-card">
+      👤
+      <span id="player-name-display">
+        Người chơi
+      </span>
+    </div>
+
+    <div class="hud-card">
+      💰
+      <span id="money">
+        $0
+      </span>
+    </div>
+
+    <div class="hud-card">
+      💼
+      <span id="job">
+        Chưa có việc
+      </span>
+    </div>
+
+  </div>
+
+  <div id="world-info">
+    <div id="time">
+      🕐 08:00
+    </div>
+
+    <div id="day">
+      📅 Ngày 1
+    </div>
+
+    <div id="weather">
+      ☀️ Trời nắng
+    </div>
+  </div>
+
+  <!-- MENU BUTTONS -->
+
+  <div id="buttons">
+
+    <button
+      class="hud-btn"
+      onclick="openMenu('inventory-menu')"
+      title="Túi đồ"
+    >
+      🎒
+    </button>
+
+    <button
+      class="hud-btn"
+      onclick="openMenu('shop-menu')"
+      title="Cửa hàng"
+    >
+      🛒
+    </button>
+
+    <button
+      class="hud-btn"
+      onclick="openMenu('job-menu')"
+      title="Nghề nghiệp"
+    >
+      💼
+    </button>
+
+    <button
+      class="hud-btn"
+      onclick="openMenu('business-menu')"
+      title="Kinh doanh"
+    >
+      🏪
+    </button>
+
+    <button
+      class="hud-btn"
+      onclick="openMenu('furniture-menu')"
+      title="Nội thất"
+    >
+      🛋️
+    </button>
+
+    <button
+      class="hud-btn"
+      onclick="toggleBike()"
+      title="Xe máy"
+    >
+      🛵
+    </button>
+
+  </div>
+
+  <!-- NOTICE -->
+
+  <div id="notices"></div>
+
+  <!-- CHAT -->
+
+  <div id="chat-box">
+
+    <div id="chat-messages"></div>
+
+    <form id="chat-form">
+
+      <input
+        id="chat-input"
+        maxlength="200"
+        placeholder="Nhắn tin..."
+        autocomplete="off"
+      />
+
+      <button id="chat-send">
+        ➤
+      </button>
+
+    </form>
+
+  </div>
+
+  <!-- JOYSTICK -->
+
+  <div id="joystick">
+    <div id="joystick-stick"></div>
+  </div>
+
+  <!-- ACTION BUTTONS -->
+
+  <div id="action-buttons">
+
+    <button
+      class="action-btn"
+      onclick="interactNearby()"
+    >
+      ✋
+    </button>
+
+    <button
+      class="action-btn"
+      onclick="requestRide()"
+    >
+      🚕
+    </button>
+
+  </div>
+
+</div>
+
+<!-- ========================================================
+     INVENTORY
+========================================================= -->
+
+<div
+  id="inventory-menu"
+  class="menu"
+>
+  <div class="menu-box">
+
+    <div class="menu-header">
+      <h2>🎒 Túi đồ</h2>
+
+      <button
+        class="close-btn"
+        onclick="closeMenus()"
+      >
+        ✕
+      </button>
+    </div>
+
+    <div id="inventory-list"></div>
+
+  </div>
+</div>
+
+<!-- ========================================================
+     SHOP
+========================================================= -->
+
+<div
+  id="shop-menu"
+  class="menu"
+>
+  <div class="menu-box">
+
+    <div class="menu-header">
+      <h2>🛒 Chợ thành phố</h2>
+
+      <button
+        class="close-btn"
+        onclick="closeMenus()"
+      >
+        ✕
+      </button>
+    </div>
+
+    <div
+      id="market-list"
+    ></div>
+
+  </div>
+</div>
+
+<!-- ========================================================
+     JOB
+========================================================= -->
+
+<div
+  id="job-menu"
+  class="menu"
+>
+  <div class="menu-box">
+
+    <div class="menu-header">
+      <h2>💼 Nghề nghiệp</h2>
+
+      <button
+        class="close-btn"
+        onclick="closeMenus()"
+      >
+        ✕
+      </button>
+    </div>
+
+    <div id="job-list"></div>
+
+  </div>
+</div>
+
+<!-- ========================================================
+     BUSINESS
+========================================================= -->
+
+<div
+  id="business-menu"
+  class="menu"
+>
+  <div class="menu-box">
+
+    <div class="menu-header">
+      <h2>🏪 Kinh doanh</h2>
+
+      <button
+        class="close-btn"
+        onclick="closeMenus()"
+      >
+        ✕
+      </button>
+    </div>
+
+    <div id="business-content"></div>
+
+  </div>
+</div>
+
+<!-- ========================================================
+     FURNITURE
+========================================================= -->
+
+<div
+  id="furniture-menu"
+  class="menu"
+>
+  <div class="menu-box">
+
+    <div class="menu-header">
+      <h2>🛋️ Nội thất</h2>
+
+      <button
+        class="close-btn"
+        onclick="closeMenus()"
+      >
+        ✕
+      </button>
+    </div>
+
+    <div id="furniture-list"></div>
+
+  </div>
+</div>
+
+<!-- ========================================================
+     THREE.JS
+========================================================= -->
+
+<script type="module">
+
+import * as THREE from
+  "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+
+/* =========================================================
+   GLOBAL
+========================================================= */
+
+let scene;
+let camera;
+let renderer;
+
+let socket = null;
+
+let myId = null;
+
+let latestState = null;
+
+let latestMe = null;
+
+let playerObject = null;
+
+const playerObjects = new Map();
+
+const npcObjects = new Map();
+
+const vehicleObjects = new Map();
+
+const buildingObjects = new Map();
+
+let selectedGender =
+  "male";
+
+let movementInput = {
+  dx: 0,
+  dz: 0
+};
+
+let keys = {};
+
+let joystickActive = false;
+
+let joystickPointer = null;
+
+/* =========================================================
+   COLORS / WORLD
+========================================================= */
+
+const skyDay =
+  new THREE.Color(
+    0x8fd3ff
+  );
+
+const skyNight =
+  new THREE.Color(
+    0x10182d
+  );
+
+const weatherNames = {
+  sunny: "☀️ Trời nắng",
+  cloudy: "☁️ Nhiều mây",
+  light_rain: "🌦️ Mưa nhẹ",
+  heavy_rain: "🌧️ Mưa lớn",
+  storm: "⛈️ Bão"
+};
+
+/* =========================================================
+   INIT THREE
+========================================================= */
+
+function initThree() {
+
+  scene =
+    new THREE.Scene();
+
+  scene.background =
+    skyDay.clone();
+
+  scene.fog =
+    new THREE.Fog(
+      0x8fd3ff,
+      80,
+      250
+    );
+
+  camera =
+    new THREE.PerspectiveCamera(
+      45,
+      window.innerWidth /
+        window.innerHeight,
+      0.1,
+      500
+    );
+
+  camera.position.set(
+    16,
+    18,
+    16
+  );
+
+  renderer =
+    new THREE.WebGLRenderer({
+      antialias: true
+    });
+
+  renderer.setPixelRatio(
+    Math.min(
+      window.devicePixelRatio,
+      2
+    )
+  );
+
+  renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+  );
+
+  renderer.shadowMap.enabled =
+    true;
+
+  document.body.appendChild(
+    renderer.domElement
+  );
+
+  createLights();
+
+  createGround();
+
+  createRoads();
+
+  createParks();
+
+  window.addEventListener(
+    "resize",
+    resize
+  );
+
+  animate();
+}
+
+/* =========================================================
+   LIGHT
+========================================================= */
+
+function createLights() {
+
+  const ambient =
+    new THREE.HemisphereLight(
+      0xffffff,
+      0x6b8060,
+      2
+    );
+
+  scene.add(
+    ambient
+  );
+
+  const sun =
+    new THREE.DirectionalLight(
+      0xffffff,
+      2.4
+    );
+
+  sun.position.set(
+    40,
+    80,
+    30
+  );
+
+  sun.castShadow = true;
+
+  sun.shadow.mapSize.width =
+    2048;
+
+  sun.shadow.mapSize.height =
+    2048;
+
+  scene.add(
+    sun
+  );
+}
+
+/* =========================================================
+   GROUND
+========================================================= */
+
+function createGround() {
+
+  const geometry =
+    new THREE.PlaneGeometry(
+      220,
+      160
+    );
+
+  const material =
+    new THREE.MeshStandardMaterial({
+      color: 0x73b86c,
+      roughness: 1
+    });
+
+  const ground =
+    new THREE.Mesh(
+      geometry,
+      material
+    );
+
+  ground.rotation.x =
+    -Math.PI / 2;
+
+  ground.receiveShadow =
+    true;
+
+  scene.add(
+    ground
+  );
+}
+
+/* =========================================================
+   ROADS
+========================================================= */
+
+function createRoad(
+  x,
+  z,
+  width,
+  depth
+) {
+
+  const geometry =
+    new THREE.BoxGeometry(
+      width,
+      0.12,
+      depth
+    );
+
+  const material =
+    new THREE.MeshStandardMaterial({
+      color: 0x51555a,
+      roughness: .9
+    });
+
+  const road =
+    new THREE.Mesh(
+      geometry,
+      material
+    );
+
+  road.position.set(
+    x,
+    .05,
+    z
+  );
+
+  road.receiveShadow =
+    true;
+
+  scene.add(
+    road
+  );
+
+  // vạch đường
+  for (
+    let i = -width / 2;
+    i < width / 2;
+    i += 7
+  ) {
+
+    const line =
+      new THREE.Mesh(
+        new THREE.BoxGeometry(
+          3,
+          .03,
+          .18
+        ),
+        new THREE.MeshBasicMaterial({
+          color: 0xf7df6b
+        })
+      );
+
+    line.position.set(
+      x + i,
+      .13,
+      z
+    );
+
+    scene.add(
+      line
+    );
+  }
+}
+
+function createRoads() {
+
+  createRoad(
+    0,
+    0,
+    220,
+    12
+  );
+
+  createRoad(
+    0,
+    -45,
+    220,
+    10
+  );
+
+  createRoad(
+    0,
+    45,
+    220,
+    10
+  );
+
+  createRoad(
+    0,
+    0,
+    12,
+    150
+  );
+
+  createRoad(
+    -65,
+    0,
+    9,
+    150
+  );
+
+  createRoad(
+    65,
+    0,
+    9,
+    150
+  );
+}
+
+/* =========================================================
+   PARKS
+========================================================= */
+
+function createParks() {
+
+  createPark(
+    -85,
+    -35,
+    25,
+    22
+  );
+
+  createPark(
+    80,
+    -5,
+    24,
+    25
+  );
+
+  createPark(
+    -20,
+    55,
+    30,
+    18
+  );
+}
+
+function createPark(
+  x,
+  z,
+  width,
+  depth
+) {
+
+  const grass =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        width,
+        .2,
+        depth
+      ),
+      new THREE.MeshStandardMaterial({
+        color: 0x5fae62
+      })
+    );
+
+  grass.position.set(
+    x,
+    .1,
+    z
+  );
+
+  scene.add(
+    grass
+  );
+
+  for (
+    let i = 0;
+    i < 8;
+    i++
+  ) {
+
+    createTree(
+      x +
+        (Math.random() -
+          .5) *
+          width,
+      z +
+        (Math.random() -
+          .5) *
+          depth
+    );
+  }
+}
+
+/* =========================================================
+   TREE
+========================================================= */
+
+function createTree(
+  x,
+  z
+) {
+
+  const trunk =
+    new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        .35,
+        .45,
+        2.5,
+        8
+      ),
+      new THREE.MeshStandardMaterial({
+        color: 0x754c2b
+      })
+    );
+
+  trunk.position.set(
+    x,
+    1.25,
+    z
+  );
+
+  trunk.castShadow = true;
+
+  scene.add(
+    trunk
+  );
+
+  const crown =
+    new THREE.Mesh(
+      new THREE.SphereGeometry(
+        1.7,
+        10,
+        8
+      ),
+      new THREE.MeshStandardMaterial({
+        color: 0x31864a
+      })
+    );
+
+  crown.position.set(
+    x,
+    3.3,
+    z
+  );
+
+  crown.castShadow = true;
+
+  scene.add(
+    crown
+  );
+}
+
+/* =========================================================
+   BUILDINGS
+========================================================= */
+
+function createBuilding(
+  data
+) {
+
+  const group =
+    new THREE.Group();
+
+  group.position.set(
+    data.x,
+    0,
+    data.z
+  );
+
+  const body =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        data.width,
+        data.height,
+        data.depth
+      ),
+      new THREE.MeshStandardMaterial({
+        color:
+          data.color
+      })
+    );
+
+  body.position.y =
+    data.height / 2;
+
+  body.castShadow = true;
+
+  body.receiveShadow = true;
+
+  group.add(
+    body
+  );
+
+  // mái
+  const roof =
+    new THREE.Mesh(
+      new THREE.ConeGeometry(
+        Math.max(
+          data.width,
+          data.depth
+        ) * .65,
+        3.5,
+        4
+      ),
+      new THREE.MeshStandardMaterial({
+        color:
+          data.roof
+      })
+    );
+
+  roof.position.y =
+    data.height + 1.7;
+
+  roof.rotation.y =
+    Math.PI / 4;
+
+  roof.scale.z =
+    data.depth /
+    data.width;
+
+  roof.castShadow = true;
+
+  group.add(
+    roof
+  );
+
+  // cửa
+  const door =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        2.2,
+        3.2,
+        .15
+      ),
+      new THREE.MeshStandardMaterial({
+        color: 0x51352a
+      })
+    );
+
+  door.position.set(
+    0,
+    1.6,
+    data.depth / 2 +
+      .1
+  );
+
+  group.add(
+    door
+  );
+
+  // bảng tên
+  const label =
+    createTextSprite(
+      data.name
+    );
+
+  label.position.set(
+    0,
+    data.height + 4,
+    0
+  );
+
+  label.scale.set(
+    8,
+    2,
+    1
+  );
+
+  group.add(
+    label
+  );
+
+  scene.add(
+    group
+  );
+
+  buildingObjects.set(
+    data.id,
+    group
+  );
+}
+
+/* =========================================================
+   TEXT SPRITE
+========================================================= */
+
+function createTextSprite(
+  text
+) {
+
+  const canvas =
+    document.createElement(
+      "canvas"
+    );
+
+  canvas.width = 512;
+
+  canvas.height = 128;
+
+  const ctx =
+    canvas.getContext(
+      "2d"
+    );
+
+  ctx.fillStyle =
+    "rgba(20,20,25,.8)";
+
+  ctx.roundRect(
+    5,
+    5,
+    502,
+    118,
+    20
+  );
+
+  ctx.fill();
+
+  ctx.fillStyle =
+    "#ffffff";
+
+  ctx.font =
+    "bold 38px Arial";
+
+  ctx.textAlign =
+    "center";
+
+  ctx.textBaseline =
+    "middle";
+
+  ctx.fillText(
+    text,
+    256,
+    64
+  );
+
+  const texture =
+    new THREE.CanvasTexture(
+      canvas
+    );
+
+  const material =
+    new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true
+    });
+
+  return new THREE.Sprite(
+    material
+  );
+}
+
+/* =========================================================
+   PLAYER
+========================================================= */
+
+function createPlayerMesh(
+  color = 0x4f8cff
+) {
+
+  const group =
+    new THREE.Group();
+
+  const body =
+    new THREE.Mesh(
+      new THREE.CapsuleGeometry(
+        .55,
+        1.2,
+        5,
+        10
+      ),
+      new THREE.MeshStandardMaterial({
+        color
+      })
+    );
+
+  body.position.y =
+    1.25;
+
+  body.castShadow = true;
+
+  group.add(
+    body
+  );
+
+  const head =
+    new THREE.Mesh(
+      new THREE.SphereGeometry(
+        .55,
+        16,
+        12
+      ),
+      new THREE.MeshStandardMaterial({
+        color: 0xffd0aa
+      })
+    );
+
+  head.position.y =
+    2.35;
+
+  head.castShadow = true;
+
+  group.add(
+    head
+  );
+
+  // tóc
+  const hair =
+    new THREE.Mesh(
+      new THREE.SphereGeometry(
+        .57,
+        16,
+        10
+      ),
+      new THREE.MeshStandardMaterial({
+        color: 0x33251e
+      })
+    );
+
+  hair.scale.y =
+    .7;
+
+  hair.position.y =
+    2.58;
+
+  group.add(
+    hair
+  );
+
+  return group;
+}
+
+/* =========================================================
+   NPC MESH
+========================================================= */
+
+function npcColor(
+  role
+) {
+
+  if (
+    role ===
+    "customer"
+  ) {
+    return 0x70a7ff;
+  }
+
+  if (
+    role ===
+    "hotel_guest"
+  ) {
+    return 0xffca67;
+  }
+
+  if (
+    role ===
+    "restaurant_guest"
+  ) {
+    return 0xff8e8e;
+  }
+
+  if (
+    role ===
+    "server"
+  ) {
+    return 0xffffff;
+  }
+
+  if (
+    role ===
+    "kitchen"
+  ) {
+    return 0xd7d7d7;
+  }
+
+  if (
+    role ===
+    "barista"
+  ) {
+    return 0x9b6a4d;
+  }
+
+  if (
+    role ===
+    "supermarket_staff"
+  ) {
+    return 0x58c47a;
+  }
+
+  return 0xa97bd4;
+}
+
+/* =========================================================
+   VEHICLE MESH
+========================================================= */
+
+function createVehicleMesh(
+  type
+) {
+
+  const group =
+    new THREE.Group();
+
+  let color =
+    0xffffff;
+
+  if (
+    type ===
+    "taxi"
+  ) {
+    color =
+      0xffd447;
+  }
+
+  else if (
+    type ===
+    "bus"
+  ) {
+    color =
+      0x4c9cff;
+  }
+
+  else if (
+    type ===
+    "delivery"
+  ) {
+    color =
+      0xffffff;
+  }
+
+  else if (
+    type ===
+    "motorbike"
+  ) {
+    color =
+      0xe85555;
+  }
+
+  else if (
+    type ===
+    "bicycle"
+  ) {
+    color =
+      0x55b77a;
+  }
+
+  const body =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        type === "bus"
+          ? 2.5
+          : 1.5,
+        .8,
+        type === "bus"
+          ? 5
+          : 3
+      ),
+      new THREE.MeshStandardMaterial({
+        color
+      })
+    );
+
+  body.position.y =
+    .8;
+
+  body.castShadow = true;
+
+  group.add(
+    body
+  );
+
+  if (
+    type !==
+    "bicycle"
+  ) {
+
+    const roof =
+      new THREE.Mesh(
+        new THREE.BoxGeometry(
+          type === "bus"
+            ? 2.2
+            : 1.3,
+          .6,
+          type === "bus"
+            ? 2.5
+            : 1.6
+        ),
+        new THREE.MeshStandardMaterial({
+          color:
+            0xdce8ef
+        })
+      );
+
+    roof.position.y =
+      1.45;
+
+    group.add(
+      roof
+    );
+  }
+
+  return group;
+}
+
+/* =========================================================
+   CONNECT
+========================================================= */
+
+function connect() {
+
+  const protocol =
+    location.protocol ===
+    "https:"
+      ? "wss:"
+      : "ws:";
+
+  socket =
+    new WebSocket(
+      `${protocol}//${location.host}`
+    );
+
+  socket.addEventListener(
+    "open",
+    () => {
+
+      const savedName =
+        localStorage.getItem(
+          "bgb_name"
+        ) ||
+        "Người chơi";
+
+      socket.send(
+        JSON.stringify({
+          type: "join",
+          name:
+            savedName,
+          gender:
+            selectedGender
+        })
+      );
+
+      showNotice(
+        "Đã kết nối thành phố!",
+        "success"
+      );
+    }
+  );
+
+  socket.addEventListener(
+    "message",
+    event => {
+
+      let msg;
+
+      try {
+        msg =
+          JSON.parse(
+            event.data
+          );
+      } catch {
+        return;
+      }
+
+      handleServerMessage(
+        msg
+      );
+    }
+  );
+
+  socket.addEventListener(
+    "close",
+    () => {
+
+      showNotice(
+        "Mất kết nối máy chủ.",
+        "error"
+      );
+    }
+  );
+
+  socket.addEventListener(
+    "error",
+    () => {
+
+      showNotice(
+        "Không thể kết nối máy chủ.",
+        "error"
+      );
+    }
+  );
+}
+
+/* =========================================================
+   SERVER MESSAGE
+========================================================= */
+
+function handleServerMessage(
+  msg
+) {
+
+  if (
+    msg.type ===
+    "welcome"
+  ) {
+
+    myId =
+      msg.id;
+
+    latestMe =
+      msg.player;
+
+    updateHUD();
+
+    return;
+  }
+
+  if (
+    msg.type ===
+    "state"
+  ) {
+
+    latestState =
+      msg;
+
+    latestMe =
+      msg.players.find(
+        p =>
+          p.id ===
+          myId
+      );
+
+    updateWorldObjects();
+
+    updateHUD();
+
+    return;
+  }
+
+  if (
+    msg.type ===
+    "notice"
+  ) {
+
+    showNotice(
+      msg.text,
+      msg.noticeType
+    );
+
+    return;
+  }
+
+  if (
+    msg.type ===
+    "chat"
+  ) {
+
+    addChat(
+      msg.name,
+      msg.text
+    );
+
+    return;
+  }
+}
+
+/* =========================================================
+   WORLD OBJECT UPDATE
+========================================================= */
+
+function updateWorldObjects() {
+
+  if (
+    !latestState
+  ) {
+    return;
+  }
+
+  // ---------------------------------------------------------
+  // BUILDINGS
+  // ---------------------------------------------------------
+
+  for (
+    const building
+    of latestState.buildings ||
+    []
+  ) {
+
+    if (
+      !buildingObjects.has(
+        building.id
+      )
+    ) {
+
+      createBuilding(
+        building
+      );
+    }
+  }
+
+  // ---------------------------------------------------------
+  // PLAYERS
+  // ---------------------------------------------------------
+
+  const activePlayers =
+    new Set();
+
+  for (
+    const player
+    of latestState.players ||
+    []
+  ) {
+
+    activePlayers.add(
+      player.id
+    );
+
+    let object =
+      playerObjects.get(
+        player.id
+      );
+
+    if (!object) {
+
+      const color =
+        player.gender ===
+        "female"
+          ? 0xff82b4
+          : 0x4f8cff;
+
+      object =
+        createPlayerMesh(
+          color
+        );
+
+      scene.add(
+        object
+      );
+
+      playerObjects.set(
+        player.id,
+        object
+      );
+    }
+
+    object.userData.player =
+      player;
+
+    if (
+      player.id ===
+      myId
+    ) {
+      playerObject =
+        object;
+    }
+  }
+
+  for (
+    const [id, object]
+    of playerObjects
+  ) {
+
+    if (
+      !activePlayers.has(id)
+    ) {
+
+      scene.remove(
+        object
+      );
+
+      playerObjects.delete(
+        id
+      );
+    }
+  }
+
+  // ---------------------------------------------------------
+  // NPC
+  // ---------------------------------------------------------
+
+  const activeNPCs =
+    new Set();
+
+  for (
+    const npc
+    of latestState.npcs ||
+    []
+  ) {
+
+    activeNPCs.add(
+      npc.id
+    );
+
+    let object =
+      npcObjects.get(
+        npc.id
+      );
+
+    if (!object) {
+
+      object =
+        createPlayerMesh(
+          npcColor(
+            npc.role
+          )
+        );
+
+      object.scale.setScalar(
+        .8
+      );
+
+      scene.add(
+        object
+      );
+
+      npcObjects.set(
+        npc.id,
+        object
+      );
+    }
+
+    object.userData.npc =
+      npc;
+  }
+
+  for (
+    const [id, object]
+    of npcObjects
+  ) {
+
+    if (
+      !activeNPCs.has(id)
+    ) {
+
+      scene.remove(
+        object
+      );
+
+      npcObjects.delete(
+        id
+      );
+    }
+  }
+
+  // ---------------------------------------------------------
+  // VEHICLES
+  // ---------------------------------------------------------
+
+  const activeVehicles =
+    new Set();
+
+  for (
+    const vehicle
+    of latestState.vehicles ||
+    []
+  ) {
+
+    activeVehicles.add(
+      vehicle.id
+    );
+
+    let object =
+      vehicleObjects.get(
+        vehicle.id
+      );
+
+    if (!object) {
+
+      object =
+        createVehicleMesh(
+          vehicle.type
+        );
+
+      scene.add(
+        object
+      );
+
+      vehicleObjects.set(
+        vehicle.id,
+        object
+      );
+    }
+
+    object.userData.vehicle =
+      vehicle;
+  }
+
+  for (
+    const [id, object]
+    of vehicleObjects
+  ) {
+
+    if (
+      !activeVehicles.has(id)
+    ) {
+
+      scene.remove(
+        object
+      );
+
+      vehicleObjects.delete(
+        id
+      );
+    }
+  }
+}
+
+/* =========================================================
+   HUD
+========================================================= */
+
+function updateHUD() {
+
+  if (
+    !latestMe
+  ) {
+    return;
+  }
+
+  document.getElementById(
+    "player-name-display"
+  ).textContent =
+    latestMe.name;
+
+  document.getElementById(
+    "money"
+  ).textContent =
+    `$${Math.floor(
+      latestMe.money || 0
+    ).toLocaleString(
+      "vi-VN"
+    )}`;
+
+  const jobNames = {
+    unemployed:
+      "Chưa có việc",
+
+    driver:
+      "Tài xế xe ôm",
+
+    waiter:
+      "Nhân viên phục vụ",
+
+    cook:
+      "Đầu bếp",
+
+    barista:
+      "Barista",
+
+    supermarket:
+      "Nhân viên siêu thị",
+
+    hotel:
+      "Nhân viên khách sạn",
+
+    seller:
+      "Người bán hàng"
+  };
+
+  document.getElementById(
+    "job"
+  ).textContent =
+    jobNames[
+      latestMe.job
+    ] ||
+    "Chưa có việc";
+
+  if (
+    latestState
+  ) {
+
+    const time =
+      latestState.world.time;
+
+    const hours =
+      Math.floor(
+        time / 60
+      );
+
+    const minutes =
+      Math.floor(
+        time % 60
+      );
+
+    document.getElementById(
+      "time"
+    ).textContent =
+      `🕐 ${String(hours).padStart(2,"0")}:${String(minutes).padStart(2,"0")}`;
+
+    document.getElementById(
+      "day"
+    ).textContent =
+      `📅 Ngày ${latestState.world.day}`;
+
+    document.getElementById(
+      "weather"
+    ).textContent =
+      weatherNames[
+        latestState.world.weather
+      ] ||
+      latestState.world.weather;
+  }
+}
+
+/* =========================================================
+   RENDER OBJECTS
+========================================================= */
+
+function renderObjects() {
+
+  for (
+    const [
+      id,
+      object
+    ]
+    of playerObjects
+  ) {
+
+    const player =
+      object.userData.player;
+
+    if (!player) {
+      continue;
+    }
+
+    if (
+      id === myId
+    ) {
+
+      object.position.x +=
+        (
+          player.x -
+          object.position.x
+        ) *
+        .28;
+
+      object.position.z +=
+        (
+          player.z -
+          object.position.z
+        ) *
+        .28;
+    }
+
+    else {
+
+      object.position.x +=
+        (
+          player.x -
+          object.position.x
+        ) *
+        .18;
+
+      object.position.z +=
+        (
+          player.z -
+          object.position.z
+        ) *
+        .18;
+    }
+
+    object.rotation.y +=
+      (
+        player.rotation -
+        object.rotation.y
+      ) *
+      .2;
+  }
+
+  for (
+    const object
+    of npcObjects.values()
+  ) {
+
+    const npc =
+      object.userData.npc;
+
+    if (!npc) {
+      continue;
+    }
+
+    object.position.x +=
+      (
+        npc.x -
+        object.position.x
+      ) *
+      .2;
+
+    object.position.z +=
+      (
+        npc.z -
+        object.position.z
+      ) *
+      .2;
+
+    object.rotation.y +=
+      (
+        npc.rotation -
+        object.rotation.y
+      ) *
+      .2;
+  }
+
+  for (
+    const object
+    of vehicleObjects.values()
+  ) {
+
+    const vehicle =
+      object.userData.vehicle;
+
+    if (!vehicle) {
+      continue;
+    }
+
+    object.position.x +=
+      (
+        vehicle.x -
+        object.position.x
+      ) *
+      .35;
+
+    object.position.z +=
+      (
+        vehicle.z -
+        object.position.z
+      ) *
+      .35;
+
+    object.rotation.y =
+      vehicle.rotation;
+  }
+}
+
+/* =========================================================
+   CAMERA
+========================================================= */
+
+function updateCamera() {
+
+  if (
+    !playerObject
+  ) {
+    return;
+  }
+
+  const targetX =
+    playerObject.position.x +
+    15;
+
+  const targetZ =
+    playerObject.position.z +
+    15;
+
+  const targetY =
+    17;
+
+  camera.position.x +=
+    (
+      targetX -
+      camera.position.x
+    ) *
+    .08;
+
+  camera.position.y +=
+    (
+      targetY -
+      camera.position.y
+    ) *
+    .08;
+
+  camera.position.z +=
+    (
+      targetZ -
+      camera.position.z
+    ) *
+    .08;
+
+  const lookX =
+    playerObject.position.x;
+
+  const lookZ =
+    playerObject.position.z;
+
+  camera.lookAt(
+    lookX,
+    0,
+    lookZ
+  );
+}
+
+/* =========================================================
+   KEYBOARD
+========================================================= */
+
+window.addEventListener(
+  "keydown",
+  event => {
+
+    keys[
+      event.key.toLowerCase()
+    ] = true;
+
+    updateKeyboardInput();
+  }
+);
+
+window.addEventListener(
+  "keyup",
+  event => {
+
+    keys[
+      event.key.toLowerCase()
+    ] = false;
+
+    updateKeyboardInput();
+  }
+);
+
+function updateKeyboardInput() {
+
+  let dx = 0;
+  let dz = 0;
+
+  if (
+    keys["a"] ||
+    keys["arrowleft"]
+  ) {
+    dx -= 1;
+  }
+
+  if (
+    keys["d"] ||
+    keys["arrowright"]
+  ) {
+    dx += 1;
+  }
+
+  if (
+    keys["w"] ||
+    keys["arrowup"]
+  ) {
+    dz -= 1;
+  }
+
+  if (
+    keys["s"] ||
+    keys["arrowdown"]
+  ) {
+    dz += 1;
+  }
+
+  movementInput.dx =
+    dx;
+
+  movementInput.dz =
+    dz;
+}
+
+/* =========================================================
+   SEND INPUT
+========================================================= */
+
+setInterval(
+  () => {
+
+    if (
+      !socket ||
+      socket.readyState !==
+        WebSocket.OPEN
+    ) {
+      return;
+    }
+
+    socket.send(
+      JSON.stringify({
+        type: "input",
+
+        dx:
+          movementInput.dx,
+
+        dz:
+          movementInput.dz
+      })
+    );
+  },
+  50
+);
+
+/* =========================================================
+   JOYSTICK
+========================================================= */
+
+const joystick =
+  document.getElementById(
+    "joystick"
+  );
+
+const joystickStick =
+  document.getElementById(
+    "joystick-stick"
+  );
+
+function joystickMove(
+  clientX,
+  clientY
+) {
+
+  const rect =
+    joystick.getBoundingClientRect();
+
+  const centerX =
+    rect.left +
+    rect.width / 2;
+
+  const centerY =
+    rect.top +
+    rect.height / 2;
+
+  let dx =
+    clientX -
+    centerX;
+
+  let dy =
+    clientY -
+    centerY;
+
+  const max =
+    rect.width / 2 -
+    29;
+
+  const length =
+    Math.hypot(
+      dx,
+      dy
+    );
+
+  if (
+    length > max
+  ) {
+
+    dx =
+      dx / length *
+      max;
+
+    dy =
+      dy / length *
+      max;
+  }
+
+  joystickStick.style.transform =
+    `translate(${dx}px, ${dy}px)`;
+
+  movementInput.dx =
+    dx / max;
+
+  movementInput.dz =
+    dy / max;
+}
+
+function joystickReset() {
+
+  movementInput.dx =
+    0;
+
+  movementInput.dz =
+    0;
+
+  joystickStick.style.transform =
+    "translate(0,0)";
+}
+
+joystick.addEventListener(
+  "pointerdown",
+  event => {
+
+    joystickActive =
+      true;
+
+    joystickPointer =
+      event.pointerId;
+
+    joystick.setPointerCapture(
+      event.pointerId
+    );
+
+    joystickMove(
+      event.clientX,
+      event.clientY
+    );
+  }
+);
+
+joystick.addEventListener(
+  "pointermove",
+  event => {
+
+    if (
+      !joystickActive ||
+      event.pointerId !==
+        joystickPointer
+    ) {
+      return;
+    }
+
+    joystickMove(
+      event.clientX,
+      event.clientY
+    );
+  }
+);
+
+joystick.addEventListener(
+  "pointerup",
+  event => {
+
+    if (
+      event.pointerId !==
+      joystickPointer
+    ) {
+      return;
+    }
+
+    joystickActive =
+      false;
+
+    joystickReset();
+  }
+);
+
+joystick.addEventListener(
+  "pointercancel",
+  () => {
+
+    joystickActive =
+      false;
+
+    joystickReset();
+  }
+);
+
+/* =========================================================
+   BIKE
+========================================================= */
+
+window.toggleBike =
+  function () {
+
+    sendMessage({
+      type:
+        "bike_toggle"
+    });
+  };
+
+/* =========================================================
+   INTERACTION
+========================================================= */
+
+window.interactNearby =
+  function () {
+
+    if (
+      !latestState ||
+      !latestMe
+    ) {
+      return;
+    }
+
+    let closest =
+      null;
+
+    let closestDistance =
+      Infinity;
+
+    for (
+      const building
+      of latestState.buildings ||
+      []
+    ) {
+
+      const d =
+        Math.hypot(
+          latestMe.x -
+            building.x,
+          latestMe.z -
+            building.z
+        );
+
+      if (
+        d <
+        closestDistance
+      ) {
+
+        closest =
+          building;
+
+        closestDistance =
+          d;
+      }
+    }
+
+    if (
+      closest &&
+      closestDistance <
+        15
+    ) {
+
+      sendMessage({
+        type:
+          "interact",
+
+        targetId:
+          closest.id
+      });
+
+      return;
+    }
+
+    showNotice(
+      "Không có địa điểm nào gần bạn."
+    );
+  };
+
+/* =========================================================
+   RIDE
+========================================================= */
+
+window.requestRide =
+  function () {
+
+    sendMessage({
+      type:
+        "request_ride"
+    });
+  };
+
+/* =========================================================
+   MENU
+========================================================= */
+
+window.openMenu =
+  function (
+    id
+  ) {
+
+    closeMenus();
+
+    const menu =
+      document.getElementById(
+        id
+      );
+
+    if (!menu) {
+      return;
+    }
+
+    menu.style.display =
+      "flex";
+
+    if (
+      id ===
+      "inventory-menu"
+    ) {
+      renderInventory();
+    }
+
+    if (
+      id ===
+      "shop-menu"
+    ) {
+      renderMarket();
+    }
+
+    if (
+      id ===
+      "job-menu"
+    ) {
+      renderJobs();
+    }
+
+    if (
+      id ===
+      "business-menu"
+    ) {
+      renderBusiness();
+    }
+
+    if (
+      id ===
+      "furniture-menu"
+    ) {
+      renderFurniture();
+    }
+  };
+
+window.closeMenus =
+  function () {
+
+    document
+      .querySelectorAll(
+        ".menu"
+      )
+      .forEach(
+        menu => {
+          menu.style.display =
+            "none";
+        }
+      );
+  };
+
+/* =========================================================
+   INVENTORY
+========================================================= */
+
+function renderInventory() {
+
+  const list =
+    document.getElementById(
+      "inventory-list"
+    );
+
+  list.innerHTML =
+    "";
+
+  if (
+    !latestMe ||
+    !latestMe.inventory
+  ) {
+    list.innerHTML =
+      "<p>Túi đồ đang trống.</p>";
+
+    return;
+  }
+
+  const entries =
+    Object.entries(
+      latestMe.inventory
+    );
+
+  if (
+    entries.length === 0
+  ) {
+
+    list.innerHTML =
+      "<p>Túi đồ đang trống.</p>";
+
+    return;
+  }
+
+  const names = {
+    rice: "Gạo",
+    vegetable: "Rau",
+    meat: "Thịt",
+    fish: "Cá",
+    milk: "Sữa",
+    tea: "Trà",
+    coffee: "Cà phê",
+    sugar: "Đường",
+    egg: "Trứng",
+    noodle: "Mì"
+  };
+
+  for (
+    const [
+      id,
+      amount
+    ]
+    of entries
+  ) {
+
+    const div =
+      document.createElement(
+        "div"
+      );
+
+    div.className =
+      "item";
+
+    div.innerHTML = `
+      <div>
+        <div class="item-name">
+          ${names[id] || id}
+        </div>
+
+        <div class="item-small">
+          Số lượng: ${amount}
+        </div>
+      </div>
+    `;
+
+    list.appendChild(
+      div
+    );
+  }
+}
+
+/* =========================================================
+   MARKET
+========================================================= */
+
+function renderMarket() {
+
+  const list =
+    document.getElementById(
+      "market-list"
+    );
+
+  list.innerHTML =
+    "";
+
+  if (
+    !latestState
+  ) {
+    return;
+  }
+
+  for (
+    const item
+    of latestState.market ||
+    []
+  ) {
+
+    const div =
+      document.createElement(
+        "div"
+      );
+
+    div.className =
+      "item";
+
+    div.innerHTML = `
+      <div>
+        <div class="item-name">
+          ${item.name}
+        </div>
+
+        <div class="item-small">
+          Mua: $${item.buy}
+          · Bán: $${item.sell}
+        </div>
+      </div>
+
+      <div>
+        <button
+          class="small-btn"
+          onclick="buyItem('${item.id}')"
+        >
+          Mua
+        </button>
+
+        <button
+          class="small-btn green-btn"
+          onclick="sellItem('${item.id}')"
+        >
+          Bán
+        </button>
+      </div>
+    `;
+
+    list.appendChild(
+      div
+    );
+  }
+}
+
+window.buyItem =
+  function (
+    itemId
+  ) {
+
+    sendMessage({
+      type:
+        "buy",
+
+      itemId,
+
+      quantity:
+        1
+    });
+  };
+
+window.sellItem =
+  function (
+    itemId
+  ) {
+
+    sendMessage({
+      type:
+        "sell",
+
+      itemId,
+
+      quantity:
+        1
+    });
+  };
+
+/* =========================================================
+   JOBS
+========================================================= */
+
+function renderJobs() {
+
+  const list =
+    document.getElementById(
+      "job-list"
+    );
+
+  list.innerHTML =
+    "";
+
+  const jobs = [
+    [
+      "driver",
+      "🛵 Tài xế xe ôm",
+      "Lái xe chở khách"
+    ],
+
+    [
+      "waiter",
+      "🍽️ Nhân viên phục vụ",
+      "Phục vụ khách nhà hàng"
+    ],
+
+    [
+      "cook",
+      "👨‍🍳 Đầu bếp",
+      "Nấu ăn"
+    ],
+
+    [
+      "barista",
+      "☕ Barista",
+      "Pha cà phê, trà sữa"
+    ],
+
+    [
+      "supermarket",
+      "🛒 Nhân viên siêu thị",
+      "Bán hàng trong siêu thị"
+    ],
+
+    [
+      "hotel",
+      "🏨 Nhân viên khách sạn",
+      "Phục vụ khách sạn"
+    ],
+
+    [
+      "seller",
+      "🏪 Người bán hàng",
+      "Bán hàng"
+    ],
+
+    [
+      "unemployed",
+      "🚶 Chưa có việc",
+      "Không đi làm"
+    ]
+  ];
+
+  for (
+    const [
+      id,
+      name,
+      description
+    ]
+    of jobs
+  ) {
+
+    const div =
+      document.createElement(
+        "div"
+      );
+
+    div.className =
+      "item";
+
+    div.innerHTML = `
+      <div>
+        <div class="item-name">
+          ${name}
+        </div>
+
+        <div class="item-small">
+          ${description}
+        </div>
+      </div>
+
+      <button
+        class="small-btn blue-btn"
+        onclick="chooseJob('${id}')"
+      >
+        Nhận việc
+      </button>
+    `;
+
+    list.appendChild(
+      div
+    );
+  }
+}
+
+window.chooseJob =
+  function (
+    job
+  ) {
+
+    sendMessage({
+      type:
+        "job",
+
+      job
+    });
+  };
+
+/* =========================================================
+   BUSINESS
+========================================================= */
+
+function renderBusiness() {
+
+  const content =
+    document.getElementById(
+      "business-content"
+    );
+
+  content.innerHTML =
+    "";
+
+  if (
+    !latestMe
+  ) {
+    return;
+  }
+
+  if (
+    !latestMe.businessId
+  ) {
+
+    content.innerHTML = `
+      <p>
+        Bạn chưa sở hữu cửa hàng.
+      </p>
+
+      <p>
+        Hãy đến gần một cửa hàng
+        còn trống rồi bấm ✋.
+      </p>
+    `;
+
+    if (
+      latestState
+    ) {
+
+      for (
+        const business
+        of latestState.businesses ||
+        []
+      ) {
+
+        if (
+          business.ownerId
+        ) {
+          continue;
+        }
+
+        const building =
+          latestState.buildings.find(
+            b =>
+              b.id ===
+              business.buildingId
+          );
+
+        if (!building) {
+          continue;
+        }
+
+        const div =
+          document.createElement(
+            "div"
+          );
+
+        div.className =
+          "item";
+
+        div.innerHTML = `
+          <div>
+            <div class="item-name">
+              ${building.name}
+            </div>
+
+            <div class="item-small">
+              Cửa hàng còn trống
+            </div>
+          </div>
+
+          <button
+            class="small-btn"
+            onclick="rentBusiness('${business.id}')"
+          >
+            Thuê $1,500
+          </button>
+        `;
+
+        content.appendChild(
+          div
+        );
+      }
+    }
+
+    return;
+  }
+
+  const business =
+    (
+      latestState.businesses ||
+      []
+    ).find(
+      b =>
+        b.id ===
+        latestMe.businessId
+    );
+
+  if (!business) {
+    return;
+  }
+
+  content.innerHTML = `
+    <div class="item">
+      <div>
+        <div class="item-name">
+          🏪 Cửa hàng của bạn
+        </div>
+
+        <div class="item-small">
+          Cấp ${business.level}
+        </div>
+      </div>
+    </div>
+
+    <div class="item">
+      <div>
+        💰 Tiền trong cửa hàng
+      </div>
+
+      <strong>
+        $${Math.floor(
+          business.income
+        ).toLocaleString("vi-VN")}
+      </strong>
+    </div>
+
+    <div class="item">
+      <div>
+        👥 Khách hàng
+      </div>
+
+      <strong>
+        ${business.customers}
+      </strong>
+    </div>
+
+    <button
+      class="main-btn"
+      onclick="withdrawBusiness()"
+      style="margin-bottom:8px"
+    >
+      💰 Rút tiền
+    </button>
+
+    <button
+      class="main-btn"
+      onclick="upgradeBusiness()"
+    >
+      ⬆️ Nâng cấp cửa hàng
+    </button>
+  `;
+}
+
+window.rentBusiness =
+  function (
+    businessId
+  ) {
+
+    sendMessage({
+      type:
+        "rent_business",
+
+      businessId
+    });
+  };
+
+window.withdrawBusiness =
+  function () {
+
+    sendMessage({
+      type:
+        "withdraw_business"
+    });
+  };
+
+window.upgradeBusiness =
+  function () {
+
+    sendMessage({
+      type:
+        "upgrade_business"
+    });
+  };
+
+/* =========================================================
+   FURNITURE
+========================================================= */
+
+function renderFurniture() {
+
+  const list =
+    document.getElementById(
+      "furniture-list"
+    );
+
+  list.innerHTML =
+    "";
+
+  const furniture = [
+    [
+      "table",
+      "🪑 Bàn",
+      150
+    ],
+
+    [
+      "chair",
+      "💺 Ghế",
+      80
+    ],
+
+    [
+      "tv",
+      "📺 TV",
+      500
+    ],
+
+    [
+      "speaker",
+      "🔊 Loa",
+      350
+    ],
+
+    [
+      "light",
+      "💡 Đèn",
+      100
+    ],
+
+    [
+      "ac",
+      "❄️ Máy lạnh",
+      800
+    ],
+
+    [
+      "fan",
+      "🌀 Quạt",
+      180
+    ],
+
+    [
+      "fridge",
+      "🧊 Tủ lạnh",
+      700
+    ],
+
+    [
+      "coffee_machine",
+      "☕ Máy pha cà phê",
+      900
+    ],
+
+    [
+      "milk_tea_machine",
+      "🧋 Máy pha trà sữa",
+      850
+    ],
+
+    [
+      "stove",
+      "🔥 Bếp",
+      450
+    ],
+
+    [
+      "pot",
+      "🍲 Nồi",
+      120
+    ],
+
+    [
+      "pan",
+      "🍳 Chảo",
+      120
+    ],
+
+    [
+      "plant",
+      "🌱 Cây cảnh",
+      90
+    ],
+
+    [
+      "painting",
+      "🖼️ Tranh",
+      180
+    ],
+
+    [
+      "trash_bin",
+      "🗑️ Thùng rác",
+      60
+    ],
+
+    [
+      "cash_register",
+      "🧾 Máy tính tiền",
+      600
+    ]
+  ];
+
+  for (
+    const [
+      id,
+      name,
+      price
+    ]
+    of furniture
+  ) {
+
+    const div =
+      document.createElement(
+        "div"
+      );
+
+    div.className =
+      "item";
+
+    div.innerHTML = `
+      <div>
+        <div class="item-name">
+          ${name}
+        </div>
+
+        <div class="item-small">
+          Giá: $${price}
+        </div>
+      </div>
+
+      <button
+        class="small-btn"
+        onclick="buyFurniture('${id}')"
+      >
+        Mua
+      </button>
+    `;
+
+    list.appendChild(
+      div
+    );
+  }
+}
+
+window.buyFurniture =
+  function (
+    furnitureId
+  ) {
+
+    sendMessage({
+      type:
+        "buy_furniture",
+
+      furnitureId
+    });
+  };
+
+/* =========================================================
+   SEND
+========================================================= */
+
+function sendMessage(
+  data
+) {
+
+  if (
+    !socket ||
+    socket.readyState !==
+      WebSocket.OPEN
+  ) {
+
+    showNotice(
+      "Chưa kết nối máy chủ.",
+      "error"
+    );
+
+    return;
+  }
+
+  socket.send(
+    JSON.stringify(
+      data
+    )
+  );
+}
+
+/* =========================================================
+   NOTICE
+========================================================= */
+
+function showNotice(
+  text,
+  type = "info"
+) {
+
+  const container =
+    document.getElementById(
+      "notices"
+    );
+
+  const div =
+    document.createElement(
+      "div"
+    );
+
+  div.className =
+    `notice ${type}`;
+
+  div.textContent =
+    text;
+
+  container.appendChild(
+    div
+  );
+
+  setTimeout(
+    () => {
+      div.remove();
+    },
+    3000
+  );
+}
+
+/* =========================================================
+   CHAT
+========================================================= */
+
+function addChat(
+  name,
+  text
+) {
+
+  const messages =
+    document.getElementById(
+      "chat-messages"
+    );
+
+  const div =
+    document.createElement(
+      "div"
+    );
+
+  div.className =
+    "chat-message";
+
+  div.innerHTML =
+    `<b>${escapeHtml(name)}:</b> ${escapeHtml(text)}`;
+
+  messages.appendChild(
+    div
+  );
+
+  messages.scrollTop =
+    messages.scrollHeight;
+
+  while (
+    messages.children.length >
+    30
+  ) {
+    messages.firstChild.remove();
+  }
+}
+
+function escapeHtml(
+  text
+) {
+
+  return String(text)
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+}
+
+document
+  .getElementById(
+    "chat-form"
+  )
+  .addEventListener(
+    "submit",
+    event => {
+
+      event.preventDefault();
+
+      const input =
+        document.getElementById(
+          "chat-input"
+        );
+
+      const text =
+        input.value.trim();
+
+      if (!text) {
+        return;
+      }
+
+      sendMessage({
+        type:
+          "chat",
+
+        text
+      });
+
+      input.value =
+        "";
+    }
+  );
+
+/* =========================================================
+   LOGIN
+========================================================= */
+
+document
+  .querySelectorAll(
+    ".gender-btn"
+  )
+  .forEach(
+    button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          document
+            .querySelectorAll(
+              ".gender-btn"
+            )
+            .forEach(
+              b =>
+                b.classList.remove(
+                  "active"
+                )
+            );
+
+          button.classList.add(
+            "active"
+          );
+
+          selectedGender =
+            button.dataset.gender;
+        }
+      );
+    }
+  );
+
+document
+  .getElementById(
+    "play-btn"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      const name =
+        document
+          .getElementById(
+            "player-name"
+          )
+          .value
+          .trim() ||
+        "Người chơi";
+
+      localStorage.setItem(
+        "bgb_name",
+        name
+      );
+
+      document.getElementById(
+        "login"
+      ).style.display =
+        "none";
+
+      connect();
+    }
+  );
+
+/* =========================================================
+   ANIMATE
+========================================================= */
+
+function animate() {
+
+  requestAnimationFrame(
+    animate
+  );
+
+  renderObjects();
+
+  updateCamera();
+
+  renderer.render(
+    scene,
+    camera
+  );
+}
+
+/* =========================================================
+   RESIZE
+========================================================= */
+
+function resize() {
+
+  camera.aspect =
+    window.innerWidth /
+    window.innerHeight;
+
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+  );
+}
+
+/* =========================================================
+   START
+========================================================= */
+
+initThree();
+
+setTimeout(
+  () => {
+
+    document.getElementById(
+      "loading"
+    ).style.display =
+      "none";
+
+    document.getElementById(
+      "login"
+    ).style.display =
+      "flex";
+
+    const savedName =
+      localStorage.getItem(
+        "bgb_name"
+      );
+
+    if (savedName) {
+
+      document.getElementById(
+        "player-name"
+      ).value =
+        savedName;
+    }
+  },
+  900
+);
+
+</script>
+
+</body>
+</html>
