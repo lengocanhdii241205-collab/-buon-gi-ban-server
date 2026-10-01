@@ -1,0 +1,2208 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+/>
+
+<title>Buông Gì Bán</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #dff6ff;
+  font-family: Arial, sans-serif;
+  touch-action: none;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#game {
+  position: relative;
+  width: 1280px;
+  height: 720px;
+  max-width: 100vw;
+  max-height: 100vh;
+  overflow: hidden;
+  background: #bfe9ff;
+}
+
+canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* =========================
+   MENU
+========================= */
+
+#menu {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(
+      rgba(255,255,255,.65),
+      rgba(215,246,255,.85)
+    );
+}
+
+.menu-box {
+  width: min(90%, 460px);
+  padding: 30px;
+  border-radius: 30px;
+  background: rgba(255,255,255,.94);
+  box-shadow: 0 15px 45px rgba(52,93,120,.25);
+  text-align: center;
+}
+
+.logo {
+  font-size: 42px;
+  font-weight: 900;
+  color: #ff7194;
+  margin-bottom: 5px;
+}
+
+.subtitle {
+  color: #657789;
+  margin-bottom: 24px;
+}
+
+input,
+select {
+  width: 100%;
+  border: 2px solid #d9e7ef;
+  border-radius: 16px;
+  padding: 14px;
+  font-size: 17px;
+  outline: none;
+  margin-bottom: 12px;
+  background: white;
+}
+
+button {
+  border: 0;
+  border-radius: 16px;
+  padding: 13px 18px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  background: #ff82a2;
+  color: white;
+  box-shadow: 0 5px 0 #e55d80;
+}
+
+button:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 #e55d80;
+}
+
+.menu-buttons {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.secondary {
+  background: #74c8ef;
+  box-shadow: 0 5px 0 #4da8d1;
+}
+
+#joinBox {
+  display: none;
+  margin-top: 12px;
+}
+
+/* =========================
+   HUD
+========================= */
+
+#hud {
+  position: absolute;
+  z-index: 10;
+  left: 18px;
+  top: 15px;
+  display: none;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hud-item {
+  background: rgba(255,255,255,.9);
+  border-radius: 14px;
+  padding: 9px 13px;
+  color: #526372;
+  font-weight: 800;
+  box-shadow: 0 4px 15px rgba(40,80,100,.15);
+}
+
+#roomCode {
+  color: #ff658b;
+}
+
+/* =========================
+   CONTROLS
+========================= */
+
+#controls {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  display: none;
+  pointer-events: none;
+}
+
+#joystick {
+  position: absolute;
+  left: 25px;
+  bottom: 25px;
+  width: 145px;
+  height: 145px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.38);
+  border: 3px solid rgba(255,255,255,.65);
+  pointer-events: auto;
+}
+
+#stick {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 65px;
+  height: 65px;
+  transform: translate(-50%,-50%);
+  border-radius: 50%;
+  background: rgba(255,125,157,.88);
+  box-shadow: 0 6px 15px rgba(0,0,0,.15);
+}
+
+.control-buttons {
+  position: absolute;
+  right: 25px;
+  bottom: 25px;
+  display: flex;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.control-btn {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  padding: 0;
+  font-size: 25px;
+}
+
+#talkBtn {
+  background: #ffd36e;
+  box-shadow: 0 5px 0 #dfad3e;
+}
+
+#bikeBtn {
+  background: #75d6aa;
+  box-shadow: 0 5px 0 #46ad7d;
+}
+
+/* =========================
+   MARKET
+========================= */
+
+#market {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(40,65,80,.45);
+}
+
+.market-box {
+  width: min(92%, 600px);
+  max-height: 88%;
+  overflow: auto;
+  background: white;
+  border-radius: 28px;
+  padding: 22px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+}
+
+.market-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.market-title h2 {
+  margin: 0;
+  color: #ff7194;
+}
+
+.close-btn {
+  background: #e9eef2;
+  color: #657789;
+  box-shadow: none;
+}
+
+.market-list {
+  display: grid;
+  gap: 10px;
+}
+
+.market-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 18px;
+  background: #f5fafc;
+}
+
+.item-name {
+  font-weight: 900;
+  color: #536676;
+}
+
+.item-info {
+  font-size: 13px;
+  color: #8495a1;
+}
+
+.buy-btn,
+.sell-btn {
+  padding: 9px 12px;
+  font-size: 13px;
+}
+
+.sell-btn {
+  background: #74c8ef;
+  box-shadow: 0 4px 0 #4da8d1;
+}
+
+/* =========================
+   CHAT
+========================= */
+
+#chatBox {
+  position: absolute;
+  z-index: 12;
+  right: 18px;
+  top: 18px;
+  width: 270px;
+  max-height: 190px;
+  overflow: hidden;
+  display: none;
+  background: rgba(255,255,255,.82);
+  border-radius: 18px;
+  padding: 10px;
+  box-shadow: 0 5px 20px rgba(40,80,100,.15);
+}
+
+.chat-line {
+  font-size: 13px;
+  margin: 4px 0;
+  color: #536676;
+}
+
+.chat-input {
+  display: flex;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.chat-input input {
+  margin: 0;
+  padding: 8px;
+  font-size: 13px;
+}
+
+.chat-input button {
+  padding: 8px 11px;
+}
+
+/* =========================
+   TOAST
+========================= */
+
+#toast {
+  position: absolute;
+  z-index: 50;
+  left: 50%;
+  top: 85px;
+  transform: translateX(-50%);
+  display: none;
+  padding: 12px 18px;
+  border-radius: 15px;
+  background: rgba(40,55,65,.88);
+  color: white;
+  font-weight: 700;
+}
+
+/* =========================
+   NPC DIALOG
+========================= */
+
+#dialog {
+  position: absolute;
+  z-index: 25;
+  left: 50%;
+  bottom: 110px;
+  transform: translateX(-50%);
+  width: min(90%, 600px);
+  display: none;
+  padding: 16px 20px;
+  border-radius: 20px;
+  background: rgba(255,255,255,.95);
+  box-shadow: 0 8px 30px rgba(0,0,0,.18);
+}
+
+#dialogName {
+  font-weight: 900;
+  color: #ff7194;
+  margin-bottom: 5px;
+}
+
+#dialogText {
+  color: #526372;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 700px) {
+  .logo {
+    font-size: 34px;
+  }
+
+  .menu-box {
+    padding: 22px;
+  }
+
+  #hud {
+    left: 8px;
+    top: 8px;
+  }
+
+  .hud-item {
+    font-size: 12px;
+    padding: 7px 9px;
+  }
+
+  #chatBox {
+    width: 220px;
+    right: 8px;
+    top: 70px;
+  }
+
+  #joystick {
+    left: 15px;
+    bottom: 15px;
+    width: 125px;
+    height: 125px;
+  }
+
+  .control-buttons {
+    right: 15px;
+    bottom: 15px;
+  }
+
+  .control-btn {
+    width: 60px;
+    height: 60px;
+  }
+
+  .market-row {
+    grid-template-columns: 1fr auto;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+<canvas id="canvas" width="1280" height="720"></canvas>
+
+<!-- =========================
+     MENU
+========================= -->
+
+<div id="menu">
+
+  <div class="menu-box">
+
+    <div class="logo">BUÔNG GÌ BÁN</div>
+
+    <div class="subtitle">
+      Thành phố kinh doanh multiplayer 🌸
+    </div>
+
+    <input
+      id="nameInput"
+      placeholder="Tên nhân vật..."
+      maxlength="18"
+    />
+
+    <select id="genderInput">
+      <option value="female">Nữ</option>
+      <option value="male">Nam</option>
+    </select>
+
+    <div class="menu-buttons">
+
+      <button onclick="createRoom()">
+        🏠 Tạo phòng
+      </button>
+
+      <button
+        class="secondary"
+        onclick="showJoin()"
+      >
+        🚪 Vào phòng
+      </button>
+
+    </div>
+
+    <div id="joinBox">
+
+      <input
+        id="roomInput"
+        placeholder="Nhập mã phòng..."
+        maxlength="6"
+      />
+
+      <button onclick="joinRoom()">
+        Vào phòng
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- =========================
+     HUD
+========================= -->
+
+<div id="hud">
+
+  <div class="hud-item">
+    👤 <span id="playerName">---</span>
+  </div>
+
+  <div class="hud-item">
+    💰 <span id="money">1000</span>đ
+  </div>
+
+  <div class="hud-item">
+    🏠 <span id="roomCode">---</span>
+  </div>
+
+</div>
+
+<!-- =========================
+     CHAT
+========================= -->
+
+<div id="chatBox">
+
+  <div id="chatMessages"></div>
+
+  <div class="chat-input">
+
+    <input
+      id="chatInput"
+      placeholder="Nhắn tin..."
+      maxlength="100"
+    />
+
+    <button onclick="sendChat()">
+      Gửi
+    </button>
+
+  </div>
+
+</div>
+
+<!-- =========================
+     CONTROLS
+========================= -->
+
+<div id="controls">
+
+  <div id="joystick">
+    <div id="stick"></div>
+  </div>
+
+  <div class="control-buttons">
+
+    <button
+      id="talkBtn"
+      class="control-btn"
+      onclick="talkToNPC()"
+    >
+      💬
+    </button>
+
+    <button
+      id="bikeBtn"
+      class="control-btn"
+      onclick="toggleBike()"
+    >
+      🚲
+    </button>
+
+    <button
+      class="control-btn"
+      onclick="openMarket()"
+    >
+      🛒
+    </button>
+
+  </div>
+
+</div>
+
+<!-- =========================
+     DIALOG
+========================= -->
+
+<div id="dialog">
+
+  <div id="dialogName">
+    NPC
+  </div>
+
+  <div id="dialogText">
+    Xin chào!
+  </div>
+
+</div>
+
+<!-- =========================
+     MARKET
+========================= -->
+
+<div id="market">
+
+  <div class="market-box">
+
+    <div class="market-title">
+
+      <h2>🛒 Chợ thành phố</h2>
+
+      <button
+        class="close-btn"
+        onclick="closeMarket()"
+      >
+        ✕
+      </button>
+
+    </div>
+
+    <div id="marketList" class="market-list"></div>
+
+  </div>
+
+</div>
+
+<!-- =========================
+     TOAST
+========================= -->
+
+<div id="toast"></div>
+
+</div>
+
+<script>
+/* =====================================================
+   GAME
+===================================================== */
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+const W = 1280;
+const H = 720;
+
+let socket = null;
+let roomCode = null;
+
+let localPlayer = null;
+
+const players = new Map();
+
+let marketData = {};
+
+let joystickActive = false;
+let joystickX = 0;
+let joystickY = 0;
+
+let bike = false;
+
+const npcs = [
+  {
+    x: 360,
+    y: 280,
+    name: "Cô Lan",
+    text: "Hôm nay chợ đông khách ghê!"
+  },
+  {
+    x: 900,
+    y: 280,
+    name: "Chú Ba",
+    text: "Mua cá lúc giá thấp rồi bán lại nhé!"
+  },
+  {
+    x: 620,
+    y: 520,
+    name: "Bé Na",
+    text: "Mình thích ăn bánh nhất! 🍰"
+  }
+];
+
+/* =====================================================
+   UTILS
+===================================================== */
+
+function $(id) {
+  return document.getElementById(id);
+}
+
+function toast(text) {
+  $("toast").textContent = text;
+  $("toast").style.display = "block";
+
+  clearTimeout(toast.timer);
+
+  toast.timer = setTimeout(() => {
+    $("toast").style.display = "none";
+  }, 2200);
+}
+
+/* =====================================================
+   ROOM
+===================================================== */
+
+function getName() {
+  return (
+    $("nameInput").value.trim() ||
+    "Người chơi"
+  );
+}
+
+function getGender() {
+  return $("genderInput").value;
+}
+
+function showJoin() {
+  $("joinBox").style.display = "block";
+  $("roomInput").focus();
+}
+
+function createRoom() {
+  connectServer("create");
+}
+
+function joinRoom() {
+  const code = $("roomInput")
+    .value
+    .trim()
+    .toUpperCase();
+
+  if (!code) {
+    toast("Nhập mã phòng trước!");
+    return;
+  }
+
+  connectServer("join", code);
+}
+
+/* =====================================================
+   SERVER
+===================================================== */
+
+function connectServer(mode, code = "") {
+
+  if (
+    socket &&
+    socket.readyState === WebSocket.OPEN
+  ) {
+    socket.close();
+  }
+
+  const protocol =
+    location.protocol === "https:"
+      ? "wss:"
+      : "ws:";
+
+  socket = new WebSocket(
+    protocol + "//" + location.host
+  );
+
+  socket.onopen = () => {
+
+    if (mode === "create") {
+
+      socket.send(JSON.stringify({
+        type: "createRoom",
+        name: getName(),
+        gender: getGender()
+      }));
+
+    } else {
+
+      socket.send(JSON.stringify({
+        type: "joinRoom",
+        room: code,
+        name: getName(),
+        gender: getGender()
+      }));
+
+    }
+  };
+
+  socket.onmessage = event => {
+
+    let data;
+
+    try {
+      data = JSON.parse(event.data);
+    } catch {
+      return;
+    }
+
+    handleServerMessage(data);
+  };
+
+  socket.onerror = () => {
+    toast("Không kết nối được server!");
+  };
+
+  socket.onclose = () => {
+    console.log("WebSocket disconnected");
+  };
+}
+
+/* =====================================================
+   SERVER MESSAGE
+===================================================== */
+
+function handleServerMessage(data) {
+
+  if (data.type === "connected") {
+    console.log(data.message);
+    return;
+  }
+
+  if (data.type === "roomCreated") {
+
+    roomCode = data.room;
+
+    setupGame(data.player);
+
+    marketData = data.market || {};
+
+    renderMarket();
+
+    toast(
+      "Đã tạo phòng: " + roomCode
+    );
+
+    return;
+  }
+
+  if (data.type === "roomJoined") {
+
+    roomCode = data.room;
+
+    setupGame(data.player);
+
+    players.clear();
+
+    for (const p of data.players || []) {
+      players.set(p.id, p);
+    }
+
+    marketData = data.market || {};
+
+    renderMarket();
+
+    toast(
+      "Đã vào phòng: " + roomCode
+    );
+
+    return;
+  }
+
+  if (data.type === "playerJoined") {
+
+    players.set(
+      data.player.id,
+      data.player
+    );
+
+    toast(
+      data.player.name +
+      " đã vào phòng"
+    );
+
+    return;
+  }
+
+  if (data.type === "playerMoved") {
+
+    players.set(
+      data.player.id,
+      data.player
+    );
+
+    return;
+  }
+
+  if (data.type === "playerUpdated") {
+
+    if (
+      localPlayer &&
+      data.player.id === localPlayer.id
+    ) {
+      applyPlayer(data.player);
+    } else {
+      players.set(
+        data.player.id,
+        data.player
+      );
+    }
+
+    return;
+  }
+
+  if (data.type === "playerLeft") {
+
+    players.delete(data.id);
+
+    return;
+  }
+
+  if (data.type === "market") {
+
+    marketData = data.market || {};
+
+    renderMarket();
+
+    return;
+  }
+
+  if (data.type === "transaction") {
+
+    applyPlayer(data.player);
+
+    marketData = data.market || marketData;
+
+    renderMarket();
+
+    if (data.action === "buy") {
+      toast(
+        "Đã mua " +
+        getItemName(data.item) +
+        " - " +
+        data.price +
+        "đ"
+      );
+    }
+
+    if (data.action === "sell") {
+      toast(
+        "Đã bán " +
+        getItemName(data.item) +
+        " + " +
+        data.price +
+        "đ"
+      );
+    }
+
+    return;
+  }
+
+  if (data.type === "chat") {
+
+    addChat(
+      data.name,
+      data.message
+    );
+
+    return;
+  }
+
+  if (data.type === "error") {
+
+    toast(data.message);
+
+    return;
+  }
+}
+
+/* =====================================================
+   PLAYER
+===================================================== */
+
+function setupGame(player) {
+
+  localPlayer = player;
+
+  players.clear();
+
+  $("menu").style.display = "none";
+  $("hud").style.display = "flex";
+  $("controls").style.display = "block";
+  $("chatBox").style.display = "block";
+
+  $("playerName").textContent =
+    player.name;
+
+  $("roomCode").textContent =
+    roomCode;
+
+  updateHUD();
+
+  toast("Vào game thành công 🎉");
+}
+
+function applyPlayer(player) {
+
+  localPlayer = player;
+
+  $("playerName").textContent =
+    player.name;
+
+  updateHUD();
+}
+
+function updateHUD() {
+
+  if (!localPlayer) return;
+
+  $("money").textContent =
+    Number(localPlayer.money || 0)
+      .toLocaleString("vi-VN");
+}
+
+/* =====================================================
+   MARKET
+===================================================== */
+
+function getItemName(id) {
+
+  return marketData[id]?.name ||
+    ({
+      bread: "Bánh mì",
+      milk: "Sữa",
+      tea: "Trà",
+      orange: "Cam",
+      fish: "Cá",
+      cake: "Bánh"
+    }[id] || id);
+}
+
+function openMarket() {
+
+  $("market").style.display =
+    "flex";
+
+  renderMarket();
+}
+
+function closeMarket() {
+
+  $("market").style.display =
+    "none";
+}
+
+function renderMarket() {
+
+  const list = $("marketList");
+
+  if (!list) return;
+
+  list.innerHTML = "";
+
+  for (const [id, item] of Object.entries(marketData)) {
+
+    const count =
+      localPlayer?.inventory?.[id] || 0;
+
+    const row =
+      document.createElement("div");
+
+    row.className = "market-row";
+
+    row.innerHTML = `
+      <div>
+        <div class="item-name">
+          ${item.name}
+        </div>
+
+        <div class="item-info">
+          Giá: ${Number(item.price).toLocaleString("vi-VN")}đ
+          · Kho: ${item.stock}
+          · Bạn có: ${count}
+        </div>
+      </div>
+
+      <button
+        class="buy-btn"
+        onclick="buyItem('${id}')"
+      >
+        Mua
+      </button>
+
+      <button
+        class="sell-btn"
+        onclick="sellItem('${id}')"
+      >
+        Bán
+      </button>
+    `;
+
+    list.appendChild(row);
+  }
+}
+
+function buyItem(id) {
+
+  if (!socket ||
+      socket.readyState !== WebSocket.OPEN) {
+
+    toast("Chưa kết nối server!");
+    return;
+  }
+
+  socket.send(JSON.stringify({
+    type: "buy",
+    item: id
+  }));
+}
+
+function sellItem(id) {
+
+  if (!socket ||
+      socket.readyState !== WebSocket.OPEN) {
+
+    toast("Chưa kết nối server!");
+    return;
+  }
+
+  socket.send(JSON.stringify({
+    type: "sell",
+    item: id
+  }));
+}
+
+/* =====================================================
+   CHAT
+===================================================== */
+
+function addChat(name, message) {
+
+  const box =
+    $("chatMessages");
+
+  const line =
+    document.createElement("div");
+
+  line.className =
+    "chat-line";
+
+  line.textContent =
+    name + ": " + message;
+
+  box.appendChild(line);
+
+  while (
+    box.children.length > 8
+  ) {
+    box.removeChild(
+      box.firstChild
+    );
+  }
+
+  box.scrollTop =
+    box.scrollHeight;
+}
+
+function sendChat() {
+
+  const input =
+    $("chatInput");
+
+  const message =
+    input.value.trim();
+
+  if (!message) return;
+
+  if (
+    socket &&
+    socket.readyState === WebSocket.OPEN
+  ) {
+
+    socket.send(JSON.stringify({
+      type: "chat",
+      message
+    }));
+
+    input.value = "";
+  }
+}
+
+$("chatInput").addEventListener(
+  "keydown",
+  e => {
+
+    if (e.key === "Enter") {
+      sendChat();
+    }
+
+  }
+);
+
+/* =====================================================
+   BIKE
+===================================================== */
+
+function toggleBike() {
+
+  bike = !bike;
+
+  $("bikeBtn").textContent =
+    bike ? "🚴" : "🚲";
+
+  if (
+    socket &&
+    socket.readyState === WebSocket.OPEN
+  ) {
+
+    socket.send(JSON.stringify({
+      type: "bike",
+      enabled: bike
+    }));
+  }
+}
+
+/* =====================================================
+   NPC
+===================================================== */
+
+function talkToNPC() {
+
+  if (!localPlayer) return;
+
+  let nearest = null;
+  let nearestDistance = Infinity;
+
+  for (const npc of npcs) {
+
+    const dx =
+      npc.x - localPlayer.x;
+
+    const dy =
+      npc.y - localPlayer.y;
+
+    const distance =
+      Math.sqrt(dx * dx + dy * dy);
+
+    if (
+      distance < nearestDistance
+    ) {
+
+      nearestDistance =
+        distance;
+
+      nearest = npc;
+    }
+  }
+
+  if (
+    nearest &&
+    nearestDistance < 150
+  ) {
+
+    $("dialogName").textContent =
+      nearest.name;
+
+    $("dialogText").textContent =
+      nearest.text;
+
+    $("dialog").style.display =
+      "block";
+
+    clearTimeout(
+      talkToNPC.timer
+    );
+
+    talkToNPC.timer =
+      setTimeout(() => {
+        $("dialog").style.display =
+          "none";
+      }, 3500);
+
+  } else {
+
+    toast(
+      "Hãy lại gần một NPC hơn!"
+    );
+  }
+}
+
+/* =====================================================
+   JOYSTICK
+===================================================== */
+
+const joystick =
+  $("joystick");
+
+const stick =
+  $("stick");
+
+function joystickMove(clientX, clientY) {
+
+  const rect =
+    joystick.getBoundingClientRect();
+
+  const centerX =
+    rect.left + rect.width / 2;
+
+  const centerY =
+    rect.top + rect.height / 2;
+
+  let dx =
+    clientX - centerX;
+
+  let dy =
+    clientY - centerY;
+
+  const max =
+    rect.width / 2 - 34;
+
+  const distance =
+    Math.sqrt(
+      dx * dx + dy * dy
+    );
+
+  if (distance > max) {
+
+    dx =
+      dx / distance * max;
+
+    dy =
+      dy / distance * max;
+  }
+
+  stick.style.left =
+    `calc(50% + ${dx}px)`;
+
+  stick.style.top =
+    `calc(50% + ${dy}px)`;
+
+  joystickX =
+    dx / max;
+
+  joystickY =
+    dy / max;
+
+  joystickActive = true;
+}
+
+function joystickReset() {
+
+  joystickActive = false;
+
+  joystickX = 0;
+  joystickY = 0;
+
+  stick.style.left = "50%";
+  stick.style.top = "50%";
+}
+
+joystick.addEventListener(
+  "touchstart",
+  e => {
+
+    e.preventDefault();
+
+    const t =
+      e.touches[0];
+
+    joystickMove(
+      t.clientX,
+      t.clientY
+    );
+
+  },
+  { passive: false }
+);
+
+joystick.addEventListener(
+  "touchmove",
+  e => {
+
+    e.preventDefault();
+
+    const t =
+      e.touches[0];
+
+    joystickMove(
+      t.clientX,
+      t.clientY
+    );
+
+  },
+  { passive: false }
+);
+
+joystick.addEventListener(
+  "touchend",
+  e => {
+
+    e.preventDefault();
+
+    joystickReset();
+
+  },
+  { passive: false }
+);
+
+/* =====================================================
+   MOVEMENT
+===================================================== */
+
+let lastMoveSend = 0;
+
+function updateMovement(time) {
+
+  if (
+    localPlayer &&
+    joystickActive
+  ) {
+
+    const speed =
+      bike ? 5 : 2.8;
+
+    localPlayer.x +=
+      joystickX * speed;
+
+    localPlayer.y +=
+      joystickY * speed;
+
+    localPlayer.x =
+      Math.max(
+        25,
+        Math.min(
+          W - 25,
+          localPlayer.x
+        )
+      );
+
+    localPlayer.y =
+      Math.max(
+        25,
+        Math.min(
+          H - 25,
+          localPlayer.y
+        )
+      );
+
+    if (
+      socket &&
+      socket.readyState === WebSocket.OPEN &&
+      time - lastMoveSend > 45
+    ) {
+
+      lastMoveSend = time;
+
+      socket.send(JSON.stringify({
+        type: "move",
+        x: localPlayer.x,
+        y: localPlayer.y,
+        bike
+      }));
+    }
+  }
+}
+
+/* =====================================================
+   DRAW WORLD
+===================================================== */
+
+function drawBackground() {
+
+  ctx.fillStyle =
+    "#bfe8b1";
+
+  ctx.fillRect(
+    0,
+    0,
+    W,
+    H
+  );
+
+  // Roads
+  ctx.fillStyle =
+    "#d9cfc0";
+
+  ctx.fillRect(
+    0,
+    320,
+    W,
+    115
+  );
+
+  ctx.fillRect(
+    555,
+    0,
+    170,
+    H
+  );
+
+  // Road markings
+  ctx.strokeStyle =
+    "#f8efd2";
+
+  ctx.lineWidth = 5;
+
+  ctx.setLineDash([
+    25,
+    20
+  ]);
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    0,
+    377
+  );
+
+  ctx.lineTo(
+    W,
+    377
+  );
+
+  ctx.stroke();
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    640,
+    0
+  );
+
+  ctx.lineTo(
+    640,
+    H
+  );
+
+  ctx.stroke();
+
+  ctx.setLineDash([]);
+}
+
+function drawBuilding(
+  x,
+  y,
+  w,
+  h,
+  color,
+  title
+) {
+
+  ctx.fillStyle =
+    "rgba(0,0,0,.12)";
+
+  ctx.fillRect(
+    x + 7,
+    y + 9,
+    w,
+    h
+  );
+
+  ctx.fillStyle =
+    color;
+
+  ctx.fillRect(
+    x,
+    y,
+    w,
+    h
+  );
+
+  ctx.fillStyle =
+    "#fff3dc";
+
+  ctx.fillRect(
+    x + 18,
+    y + 25,
+    w - 36,
+    30
+  );
+
+  ctx.fillStyle =
+    "#536676";
+
+  ctx.font =
+    "bold 18px Arial";
+
+  ctx.textAlign =
+    "center";
+
+  ctx.fillText(
+    title,
+    x + w / 2,
+    y + 47
+  );
+
+  ctx.fillStyle =
+    "#b6dff0";
+
+  for (
+    let wx = x + 20;
+    wx < x + w - 20;
+    wx += 48
+  ) {
+
+    ctx.fillRect(
+      wx,
+      y + 75,
+      28,
+      30
+    );
+  }
+}
+
+function drawTree(x, y) {
+
+  ctx.fillStyle =
+    "#8a5d3b";
+
+  ctx.fillRect(
+    x - 7,
+    y + 22,
+    14,
+    35
+  );
+
+  ctx.fillStyle =
+    "#65b96e";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    x,
+    y,
+    32,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+  ctx.fillStyle =
+    "#82ca78";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    x - 18,
+    y - 12,
+    23,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+  ctx.beginPath();
+
+  ctx.arc(
+    x + 18,
+    y - 12,
+    23,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+}
+
+function drawCity() {
+
+  drawBuilding(
+    50,
+    55,
+    250,
+    200,
+    "#ffc6d7",
+    "🏠 NHÀ DÂN"
+  );
+
+  drawBuilding(
+    930,
+    55,
+    270,
+    200,
+    "#ffe19a",
+    "🏪 CỬA HÀNG"
+  );
+
+  drawBuilding(
+    50,
+    490,
+    250,
+    170,
+    "#b9ddff",
+    "🏫 TRƯỜNG HỌC"
+  );
+
+  drawBuilding(
+    930,
+    490,
+    270,
+    170,
+    "#d9c2ff",
+    "🏨 QUÁN TRỌ"
+  );
+
+  drawBuilding(
+    420,
+    55,
+    440,
+    175,
+    "#ffad91",
+    "🛒 CHỢ THÀNH PHỐ"
+  );
+
+  // Plaza
+  ctx.fillStyle =
+    "#e9d8b5";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    640,
+    377,
+    145,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+  // Fountain
+  ctx.fillStyle =
+    "#8ed7ef";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    640,
+    377,
+    48,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+  ctx.fillStyle =
+    "#ffffff";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    640,
+    377,
+    22,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+  // Trees
+  const trees = [
+    [350,100],
+    [880,110],
+    [350,610],
+    [875,610],
+    [410,275],
+    [870,275],
+    [410,470],
+    [870,470]
+  ];
+
+  for (const t of trees) {
+    drawTree(
+      t[0],
+      t[1]
+    );
+  }
+}
+
+/* =====================================================
+   DRAW NPC
+===================================================== */
+
+function drawNPC(npc) {
+
+  ctx.save();
+
+  ctx.translate(
+    npc.x,
+    npc.y
+  );
+
+  // Shadow
+  ctx.fillStyle =
+    "rgba(0,0,0,.13)";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    0,
+    25,
+    24,
+    9,
+    0,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+  // Body
+  ctx.fillStyle =
+    "#ff9bb5";
+
+  ctx.beginPath();
+
+  ctx.roundRect(
+    -20,
+    -5,
+    40,
+    42,
+    15
+  );
+
+  ctx.fill();
+
+  // Head
+  ctx.fillStyle =
+    "#ffd8bd";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    0,
+    -28,
+    22,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+  // Hair
+  ctx.fillStyle =
+    "#6f4a3b";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    0,
+    -34,
+    23,
+    Math.PI,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+  // Eyes
+  ctx.fillStyle =
+    "#3e4c56";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    -7,
+    -28,
+    2.5,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.arc(
+    7,
+    -28,
+    2.5,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+  ctx.restore();
+
+  // Name
+  ctx.fillStyle =
+    "#536676";
+
+  ctx.font =
+    "bold 13px Arial";
+
+  ctx.textAlign =
+    "center";
+
+  ctx.fillText(
+    npc.name,
+    npc.x,
+    npc.y - 58
+  );
+}
+
+/* =====================================================
+   DRAW PLAYER
+===================================================== */
+
+function drawPlayer(player, isLocal = false) {
+
+  ctx.save();
+
+  ctx.translate(
+    player.x,
+    player.y
+  );
+
+  if (player.bike) {
+
+    ctx.fillStyle =
+      "#555";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      -18,
+      22,
+      10,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.arc(
+      18,
+      22,
+      10,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.strokeStyle =
+      "#555";
+
+    ctx.lineWidth = 4;
+
+    ctx.stroke();
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      -18,
+      22
+    );
+
+    ctx.lineTo(
+      0,
+      0
+    );
+
+    ctx.lineTo(
+      18,
+      22
+    );
+
+    ctx.lineTo(
+      -5,
+      22
+    );
+
+    ctx.stroke();
+  }
+
+  // Shadow
+  ctx.fillStyle =
+    "rgba(0,0,0,.14)";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    0,
+    25,
+    25,
+    9,
+    0,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+  // Body
+  ctx.fillStyle =
+    player.gender === "male"
+      ? "#74b9ff"
+      : "#ff82a2";
+
+  ctx.beginPath();
+
+  ctx.roundRect(
+    -21,
+    -3,
+    42,
+    43,
+    15
+  );
+
+  ctx.fill();
+
+  // Head
+  ctx.fillStyle =
+    "#ffd8bd";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    0,
+    -29,
+    23,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+  // Hair
+  ctx.fillStyle =
+    player.gender === "male"
+      ? "#4b3a32"
+      : "#70483a";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    0,
+    -35,
+    24,
+    Math.PI,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+  // Eyes
+  ctx.fillStyle =
+    "#3c4a54";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    -8,
+    -29,
+    3,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.arc(
+    8,
+    -29,
+    3,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+  if (isLocal) {
+
+    ctx.strokeStyle =
+      "#ffffff";
+
+    ctx.lineWidth = 3;
+
+    ctx.beginPath();
+
+    ctx.arc(
+      0,
+      0,
+      37,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.stroke();
+  }
+
+  ctx.restore();
+
+  // Name
+  ctx.fillStyle =
+    isLocal
+      ? "#ff5f88"
+      : "#536676";
+
+  ctx.font =
+    "bold 13px Arial";
+
+  ctx.textAlign =
+    "center";
+
+  ctx.fillText(
+    player.name,
+    player.x,
+    player.y - 62
+  );
+}
+
+/* =====================================================
+   RENDER
+===================================================== */
+
+function render() {
+
+  ctx.clearRect(
+    0,
+    0,
+    W,
+    H
+  );
+
+  drawBackground();
+  drawCity();
+
+  for (const npc of npcs) {
+    drawNPC(npc);
+  }
+
+  for (const player of players.values()) {
+
+    drawPlayer(
+      player,
+      false
+    );
+  }
+
+  if (localPlayer) {
+
+    drawPlayer(
+      localPlayer,
+      true
+    );
+  }
+}
+
+/* =====================================================
+   GAME LOOP
+===================================================== */
+
+function loop(time) {
+
+  updateMovement(time);
+
+  render();
+
+  requestAnimationFrame(loop);
+}
+
+requestAnimationFrame(loop);
+
+/* =====================================================
+   RANDOM CITY CHAT
+===================================================== */
+
+setInterval(() => {
+
+  if (!localPlayer) return;
+
+  const messages = [
+    "Chợ hôm nay đông ghê!",
+    "Ai bán cá không?",
+    "Giá bánh hôm nay sao rồi?",
+    "Đi kiếm tiền thôi! 💰",
+    "Có ai đi cùng không?",
+    "Mua gì bán gì đây ta?"
+  ];
+
+  if (
+    Math.random() < 0.35
+  ) {
+
+    addChat(
+      "💬 Thành phố",
+      messages[
+        Math.floor(
+          Math.random() *
+          messages.length
+        )
+      ]
+    );
+  }
+
+}, 7000);
+
+/* =====================================================
+   PREVENT ZOOM / SCROLL
+===================================================== */
+
+document.addEventListener(
+  "touchmove",
+  e => {
+    e.preventDefault();
+  },
+  { passive: false }
+);
+
+document.addEventListener(
+  "gesturestart",
+  e => {
+    e.preventDefault();
+  }
+);
+</script>
+
+</body>
+</html>
