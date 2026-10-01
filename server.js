@@ -1,11 +1,13 @@
 const http = require("http");
+const fs = require("fs");
+const path = require("path");
 const WebSocket = require("ws");
 const crypto = require("crypto");
 
 const PORT = process.env.PORT || 3000;
 
 // ================================
-// CẤU HÌNH GAME MÀN HÌNH NGANG
+// CẤU HÌNH GAME
 // ================================
 
 const GAME_WIDTH = 1280;
@@ -54,27 +56,127 @@ function broadcast(room, data, except = null) {
 
 // ================================
 // HTTP SERVER
+// PHỤC VỤ index.html + FILE GAME
 // ================================
 
 const server = http.createServer((req, res) => {
-  res.writeHead(200, {
-    "Content-Type": "text/plain; charset=utf-8"
-  });
+  // Bỏ query string, ví dụ ?abc=123
+  const requestPath = new URL(
+    req.url,
+    `http://${req.headers.host}`
+  ).pathname;
 
-  res.end("Buôn Gì Bán - Multiplayer Server - Landscape 1280x720");
+  // Trang chính
+  if (requestPath === "/") {
+    serveFile(
+      path.join(__dirname, "index.html"),
+      res
+    );
+    return;
+  }
+
+  // Các file khác của game
+  const safePath = path.normalize(
+    requestPath.replace(/^\/+/, "")
+  );
+
+  // Chặn truy cập ra ngoài thư mục project
+  if (
+    safePath.startsWith("..") ||
+    path.isAbsolute(safePath)
+  ) {
+    res.writeHead(403, {
+      "Content-Type": "text/plain; charset=utf-8"
+    });
+
+    res.end("Forbidden");
+    return;
+  }
+
+  const filePath = path.join(
+    __dirname,
+    safePath
+  );
+
+  serveFile(filePath, res);
 });
+
+// ================================
+// PHỤC VỤ FILE
+// ================================
+
+function serveFile(filePath, res) {
+  const ext = path.extname(filePath).toLowerCase();
+
+  const contentTypes = {
+    ".html": "text/html; charset=utf-8",
+    ".htm": "text/html; charset=utf-8",
+
+    ".js": "application/javascript; charset=utf-8",
+    ".mjs": "application/javascript; charset=utf-8",
+
+    ".css": "text/css; charset=utf-8",
+
+    ".json": "application/json; charset=utf-8",
+
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+    ".svg": "image/svg+xml",
+    ".ico": "image/x-icon",
+
+    ".mp3": "audio/mpeg",
+    ".wav": "audio/wav",
+    ".ogg": "audio/ogg",
+
+    ".mp4": "video/mp4",
+    ".webm": "video/webm"
+  };
+
+  const contentType =
+    contentTypes[ext] ||
+    "application/octet-stream";
+
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      res.writeHead(404, {
+        "Content-Type":
+          "text/plain; charset=utf-8"
+      });
+
+      res.end(
+        `Không tìm thấy file: ${path.basename(filePath)}`
+      );
+
+      return;
+    }
+
+    res.writeHead(200, {
+      "Content-Type": contentType,
+      "Cache-Control": "no-cache"
+    });
+
+    res.end(data);
+  });
+}
 
 // ================================
 // WEBSOCKET SERVER
 // ================================
 
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({
+  server
+});
 
 wss.on("connection", (ws) => {
   const id = crypto.randomUUID();
 
+  console.log("WebSocket client connected:", id);
+
   // ================================
-  // NHẬN DỮ LIỆU TỪ GAME
+  // NHẬN DỮ LIỆU
   // ================================
 
   ws.on("message", (raw) => {
@@ -82,7 +184,12 @@ wss.on("connection", (ws) => {
 
     try {
       data = JSON.parse(raw.toString());
-    } catch {
+    } catch (error) {
+      send(ws, {
+        type: "error",
+        message: "Dữ liệu không hợp lệ."
+      });
+
       return;
     }
 
@@ -106,7 +213,6 @@ wss.on("connection", (ws) => {
             ? "female"
             : "male",
 
-        // Vị trí giữa màn hình ngang 1280x720
         x: 640,
         y: 360,
 
@@ -126,6 +232,10 @@ wss.on("connection", (ws) => {
       ws.room = code;
       ws.playerId = id;
 
+      console.log(
+        `Phòng ${code} được tạo bởi ${player.name}`
+      );
+
       send(ws, {
         type: "roomCreated",
 
@@ -133,8 +243,8 @@ wss.on("connection", (ws) => {
 
         player: publicPlayer(player),
 
-        // Thông tin kích thước game
         gameWidth: GAME_WIDTH,
+
         gameHeight: GAME_HEIGHT
       });
 
@@ -148,14 +258,15 @@ wss.on("connection", (ws) => {
     if (data.type === "joinRoom") {
       const code = String(
         data.room || ""
-      ).toUpperCase();
+      )
+        .trim()
+        .toUpperCase();
 
       const room = rooms.get(code);
 
       if (!room) {
         send(ws, {
           type: "error",
-
           message: "Không tìm thấy phòng."
         });
 
@@ -175,7 +286,6 @@ wss.on("connection", (ws) => {
             ? "female"
             : "male",
 
-        // Vị trí giữa màn hình ngang
         x: 640,
         y: 360,
 
@@ -191,7 +301,11 @@ wss.on("connection", (ws) => {
       ws.room = code;
       ws.playerId = id;
 
-      // Gửi danh sách người chơi cho người vừa vào
+      console.log(
+        `${player.name} vào phòng ${code}`
+      );
+
+      // Gửi cho người vừa vào
       send(ws, {
         type: "joined",
 
@@ -208,7 +322,7 @@ wss.on("connection", (ws) => {
         gameHeight: GAME_HEIGHT
       });
 
-      // Báo cho những người khác
+      // Báo cho người chơi khác
       broadcast(
         room,
         {
@@ -229,6 +343,11 @@ wss.on("connection", (ws) => {
     const room = rooms.get(ws.room);
 
     if (!room) {
+      send(ws, {
+        type: "error",
+        message: "Bạn chưa vào phòng."
+      });
+
       return;
     }
 
@@ -241,7 +360,7 @@ wss.on("connection", (ws) => {
     }
 
     // ================================
-    // DI CHUYỂN NHÂN VẬT
+    // DI CHUYỂN
     // ================================
 
     if (data.type === "move") {
@@ -346,10 +465,15 @@ wss.on("connection", (ws) => {
   });
 
   // ================================
-  // NGƯỜI CHƠI THOÁT
+  // NGẮT KẾT NỐI
   // ================================
 
   ws.on("close", () => {
+    console.log(
+      "WebSocket client disconnected:",
+      id
+    );
+
     const room = rooms.get(ws.room);
 
     if (!room) {
@@ -375,7 +499,22 @@ wss.on("connection", (ws) => {
     // Không còn ai thì xóa phòng
     if (room.players.size === 0) {
       rooms.delete(ws.room);
+
+      console.log(
+        `Phòng ${ws.room} đã được xóa`
+      );
     }
+  });
+
+  // ================================
+  // LỖI WEBSOCKET
+  // ================================
+
+  ws.on("error", (error) => {
+    console.error(
+      "WebSocket error:",
+      error.message
+    );
   });
 });
 
@@ -383,24 +522,24 @@ wss.on("connection", (ws) => {
 // CHUYỂN PLAYER THÀNH DỮ LIỆU CÔNG KHAI
 // ================================
 
-function publicPlayer(p) {
+function publicPlayer(player) {
   return {
-    id: p.id,
+    id: player.id,
 
-    name: p.name,
+    name: player.name,
 
-    gender: p.gender,
+    gender: player.gender,
 
-    x: p.x,
+    x: player.x,
 
-    y: p.y,
+    y: player.y,
 
-    money: p.money,
+    money: player.money,
 
     reputation:
-      p.reputation,
+      player.reputation,
 
-    shops: p.shops
+    shops: player.shops
   };
 }
 
@@ -431,4 +570,25 @@ server.listen(PORT, () => {
   console.log(
     `Game size: ${GAME_WIDTH}x${GAME_HEIGHT}`
   );
+
+  console.log(
+    `Web: http://localhost:${PORT}`
+  );
 });
+
+// ================================
+// XỬ LÝ LỖI SERVER
+// ================================
+
+server.on("error", (error) => {
+  console.error(
+    "HTTP server error:",
+    error
+  );
+});
+      
+
+      
+
+        
+      
