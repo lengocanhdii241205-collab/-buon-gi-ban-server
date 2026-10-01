@@ -2,27 +2,1662 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0,
+      maximum-scale=1.0, user-scalable=no">
+
 <title>Buông Gì Bán</title>
 
 <style>
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:Arial,sans-serif;
-  background:linear-gradient(135deg,#fff4df,#ffe0b2);
-  color:#33251c;
+* {
+  box-sizing: border-box;
 }
-button{
-  border:0;
-  border-radius:14px;
-  padding:12px 16px;
-  font-weight:bold;
-  cursor:pointer;
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #fff4df, #ffe0b2);
+  color: #33251c;
 }
-.game{
-  min-height:100vh;
-  padding:14px;
+
+button,
+input {
+  font: inherit;
 }
-.top{
-  display:flex;
+
+button {
+  border: 0;
+  border-radius: 14px;
+  padding: 12px 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+input {
+  width: 100%;
+  padding: 13px;
+  border: 2px solid #e4c49b;
+  border-radius: 12px;
+  outline: none;
+  background: #fff;
+}
+
+input:focus {
+  border-color: #d58a35;
+}
+
+/* =========================
+   MÀN HÌNH MENU
+========================= */
+
+#menu {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.menu-box {
+  width: min(600px, 100%);
+  margin: 30px auto;
+  padding: 28px;
+  background: rgba(255,255,255,0.94);
+  border-radius: 26px;
+  box-shadow: 0 15px 45px rgba(90,55,20,0.18);
+}
+
+.logo {
+  text-align: center;
+  font-size: 42px;
+  font-weight: 900;
+  color: #a9541d;
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  text-align: center;
+  color: #806a56;
+  margin-bottom: 25px;
+}
+
+.form-group {
+  margin-bottom: 14px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 7px;
+  font-weight: bold;
+}
+
+.gender {
+  display: flex;
+  gap: 10px;
+}
+
+.gender button {
+  flex: 1;
+  background: #f4e4d0;
+  color: #56351e;
+}
+
+.gender button.selected {
+  background: #d87828;
+  color: white;
+}
+
+.main-btn {
+  width: 100%;
+  margin-top: 8px;
+  background: #d87828;
+  color: white;
+  font-size: 17px;
+}
+
+.secondary-btn {
+  width: 100%;
+  margin-top: 10px;
+  background: #f0dcc4;
+  color: #56351e;
+}
+
+.join-row {
+  display: flex;
+  gap: 8px;
+}
+
+.join-row input {
+  flex: 1;
+}
+
+.join-row button {
+  background: #6e9b55;
+  color: white;
+}
+
+.status {
+  min-height: 24px;
+  margin-top: 15px;
+  text-align: center;
+  color: #9b3b20;
+  font-weight: bold;
+}
+
+/* =========================
+   GAME
+========================= */
+
+#gameScreen {
+  display: none;
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background: #8dcc70;
+}
+
+#gameCanvas {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(1280px, 100vw);
+  height: min(720px, 100vh);
+  transform: translate(-50%, -50%);
+  background: #83bd62;
+  touch-action: none;
+}
+
+/* =========================
+   HUD
+========================= */
+
+.hud {
+  position: absolute;
+  z-index: 10;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.panel {
+  background: rgba(255,255,255,0.94);
+  border-radius: 15px;
+  padding: 10px 13px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+  pointer-events: auto;
+}
+
+.stats {
+  display: flex;
+  gap: 13px;
+  flex-wrap: wrap;
+  font-weight: bold;
+}
+
+.room {
+  color: #a9541d;
+}
+
+.game-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.game-buttons button {
+  background: #fff;
+  color: #633b20;
+  padding: 9px 12px;
+}
+
+/* =========================
+   MOBILE CONTROLS
+========================= */
+
+.controls {
+  position: absolute;
+  z-index: 20;
+  left: 15px;
+  bottom: 15px;
+  display: flex;
+  gap: 10px;
+}
+
+.control-btn {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  color: #60391e;
+  font-size: 24px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+  padding: 0;
+}
+
+.actions {
+  position: absolute;
+  z-index: 20;
+  right: 15px;
+  bottom: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.action-btn {
+  background: #d87828;
+  color: white;
+  min-width: 130px;
+}
+
+.action-btn.shop {
+  background: #6e9b55;
+}
+
+/* =========================
+   THÔNG BÁO
+========================= */
+
+#message {
+  position: absolute;
+  z-index: 50;
+  left: 50%;
+  top: 75px;
+  transform: translateX(-50%);
+  max-width: 90%;
+  padding: 11px 17px;
+  border-radius: 14px;
+  background: rgba(50,35,25,0.9);
+  color: white;
+  font-weight: bold;
+  text-align: center;
+  opacity: 0;
+  transition: opacity .2s;
+  pointer-events: none;
+}
+
+#message.show {
+  opacity: 1;
+}
+
+/* =========================
+   PHÒNG
+========================= */
+
+.room-code {
+  margin: 15px 0;
+  padding: 15px;
+  border-radius: 14px;
+  background: #fff0d9;
+  text-align: center;
+}
+
+.room-code strong {
+  display: block;
+  font-size: 30px;
+  letter-spacing: 4px;
+  color: #a9541d;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 700px) {
+
+  .menu-box {
+    margin: 10px auto;
+    padding: 20px;
+  }
+
+  .logo {
+    font-size: 32px;
+  }
+
+  .stats {
+    font-size: 12px;
+    gap: 7px;
+  }
+
+  .panel {
+    padding: 8px;
+  }
+
+  .game-buttons button {
+    padding: 7px 9px;
+    font-size: 12px;
+  }
+
+  .action-btn {
+    min-width: 110px;
+    font-size: 13px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<!-- =========================
+     MENU
+========================= -->
+
+<div id="menu">
+
+  <div class="menu-box">
+
+    <div class="logo">🛵 Buông Gì Bán</div>
+
+    <div class="subtitle">
+      Game mô phỏng kinh doanh multiplayer
+    </div>
+
+    <div class="form-group">
+      <label for="playerName">Tên người chơi</label>
+      <input
+        id="playerName"
+        maxlength="18"
+        placeholder="Nhập tên của bạn..."
+        autocomplete="off">
+    </div>
+
+    <div class="form-group">
+      <label>Nhân vật</label>
+
+      <div class="gender">
+        <button
+          id="maleBtn"
+          class="selected"
+          onclick="selectGender('male')">
+          👨 Nam
+        </button>
+
+        <button
+          id="femaleBtn"
+          onclick="selectGender('female')">
+          👩 Nữ
+        </button>
+      </div>
+    </div>
+
+    <button
+      class="main-btn"
+      onclick="createRoom()">
+      🎮 Tạo phòng
+    </button>
+
+    <div style="text-align:center;margin:18px 0;color:#987d63">
+      hoặc
+    </div>
+
+    <div class="join-row">
+
+      <input
+        id="roomInput"
+        maxlength="5"
+        placeholder="Mã phòng"
+        autocomplete="off">
+
+      <button onclick="joinRoom()">
+        Vào phòng
+      </button>
+
+    </div>
+
+    <div id="roomInfo"></div>
+
+    <div id="status" class="status"></div>
+
+  </div>
+
+</div>
+
+
+<!-- =========================
+     GAME
+========================= -->
+
+<div id="gameScreen">
+
+  <canvas
+    id="gameCanvas"
+    width="1280"
+    height="720">
+  </canvas>
+
+  <div class="hud">
+
+    <div class="panel">
+
+      <div class="stats">
+
+        <span>
+          👤 <span id="hudName">---</span>
+        </span>
+
+        <span>
+          💰 <span id="money">1000</span>đ
+        </span>
+
+        <span>
+          ⭐ <span id="reputation">50</span>
+        </span>
+
+        <span>
+          🏪 <span id="shops">0</span>
+        </span>
+
+        <span class="room">
+          Phòng: <span id="roomCode">---</span>
+        </span>
+
+      </div>
+
+    </div>
+
+    <div class="panel game-buttons">
+
+      <button onclick="leaveGame()">
+        Thoát
+      </button>
+
+    </div>
+
+  </div>
+
+  <div id="message"></div>
+
+  <!-- Điều khiển -->
+  <div class="controls">
+
+    <button
+      class="control-btn"
+      ontouchstart="startMove('left')"
+      ontouchend="stopMove()"
+      onmousedown="startMove('left')"
+      onmouseup="stopMove()">
+      ◀
+    </button>
+
+    <button
+      class="control-btn"
+      ontouchstart="startMove('down')"
+      ontouchend="stopMove()"
+      onmousedown="startMove('down')"
+      onmouseup="stopMove()">
+      ▼
+    </button>
+
+    <button
+      class="control-btn"
+      ontouchstart="startMove('up')"
+      ontouchend="stopMove()"
+      onmousedown="startMove('up')"
+      onmouseup="stopMove()">
+      ▲
+    </button>
+
+    <button
+      class="control-btn"
+      ontouchstart="startMove('right')"
+      ontouchend="stopMove()"
+      onmousedown="startMove('right')"
+      onmouseup="stopMove()">
+      ▶
+    </button>
+
+  </div>
+
+  <!-- Hành động -->
+  <div class="actions">
+
+    <button
+      class="action-btn"
+      onclick="doBike()">
+      🛵 Chạy xe ôm
+    </button>
+
+    <button
+      class="action-btn shop"
+      onclick="buyShop()">
+      🏪 Mua sạp 500đ
+    </button>
+
+  </div>
+
+</div>
+
+
+<script>
+/* =========================
+   BIẾN GAME
+========================= */
+
+const canvas =
+  document.getElementById("gameCanvas");
+
+const ctx =
+  canvas.getContext("2d");
+
+const GAME_WIDTH = 1280;
+const GAME_HEIGHT = 720;
+
+let socket = null;
+
+let selectedGender = "male";
+
+let currentPlayer = null;
+
+let players = new Map();
+
+let roomCodeValue = "";
+
+let moving = false;
+
+let moveDirection = null;
+
+let animationId = null;
+
+
+/* =========================
+   CHỌN GIỚI TÍNH
+========================= */
+
+function selectGender(gender) {
+
+  selectedGender = gender;
+
+  document
+    .getElementById("maleBtn")
+    .classList.toggle(
+      "selected",
+      gender === "male"
+    );
+
+  document
+    .getElementById("femaleBtn")
+    .classList.toggle(
+      "selected",
+      gender === "female"
+    );
+}
+
+
+/* =========================
+   KẾT NỐI WEBSOCKET
+========================= */
+
+function connectSocket() {
+
+  if (
+    socket &&
+    (
+      socket.readyState === WebSocket.OPEN ||
+      socket.readyState === WebSocket.CONNECTING
+    )
+  ) {
+    return;
+  }
+
+  const protocol =
+    location.protocol === "https:"
+      ? "wss:"
+      : "ws:";
+
+  socket = new WebSocket(
+    protocol + "//" + location.host
+  );
+
+  socket.onopen = () => {
+
+    setStatus("Đã kết nối server.");
+
+  };
+
+  socket.onmessage = (event) => {
+
+    let data;
+
+    try {
+      data = JSON.parse(event.data);
+    } catch {
+      return;
+    }
+
+    handleServerMessage(data);
+
+  };
+
+  socket.onerror = () => {
+
+    setStatus(
+      "Không thể kết nối server."
+    );
+
+  };
+
+  socket.onclose = () => {
+
+    if (
+      document.getElementById("gameScreen")
+        .style.display !== "block"
+    ) {
+      return;
+    }
+
+    showMessage(
+      "Mất kết nối server."
+    );
+
+  };
+}
+
+
+/* =========================
+   TẠO PHÒNG
+========================= */
+
+function createRoom() {
+
+  const name =
+    getPlayerName();
+
+  if (!name) {
+
+    setStatus(
+      "Vui lòng nhập tên."
+    );
+
+    return;
+  }
+
+  connectSocket();
+
+  waitForSocket(() => {
+
+    send({
+      type: "createRoom",
+      name,
+      gender: selectedGender
+    });
+
+  });
+
+}
+
+
+/* =========================
+   VÀO PHÒNG
+========================= */
+
+function joinRoom() {
+
+  const name =
+    getPlayerName();
+
+  const room =
+    document
+      .getElementById("roomInput")
+      .value
+      .trim()
+      .toUpperCase();
+
+  if (!name) {
+
+    setStatus(
+      "Vui lòng nhập tên."
+    );
+
+    return;
+  }
+
+  if (!room) {
+
+    setStatus(
+      "Vui lòng nhập mã phòng."
+    );
+
+    return;
+  }
+
+  connectSocket();
+
+  waitForSocket(() => {
+
+    send({
+      type: "joinRoom",
+      name,
+      gender: selectedGender,
+      room
+    });
+
+  });
+
+}
+
+
+/* =========================
+   CHỜ SOCKET
+========================= */
+
+function waitForSocket(callback) {
+
+  if (
+    socket &&
+    socket.readyState === WebSocket.OPEN
+  ) {
+
+    callback();
+
+    return;
+  }
+
+  setStatus(
+    "Đang kết nối server..."
+  );
+
+  const timer =
+    setInterval(() => {
+
+      if (
+        socket &&
+        socket.readyState === WebSocket.OPEN
+      ) {
+
+        clearInterval(timer);
+
+        callback();
+
+      }
+
+    }, 100);
+
+}
+
+
+/* =========================
+   GỬI DỮ LIỆU
+========================= */
+
+function send(data) {
+
+  if (
+    !socket ||
+    socket.readyState !== WebSocket.OPEN
+  ) {
+
+    showMessage(
+      "Chưa kết nối server."
+    );
+
+    return;
+  }
+
+  socket.send(
+    JSON.stringify(data)
+  );
+
+}
+
+
+/* =========================
+   NHẬN SERVER
+========================= */
+
+function handleServerMessage(data) {
+
+  if (data.type === "roomCreated") {
+
+    roomCodeValue =
+      data.room;
+
+    currentPlayer =
+      data.player;
+
+    players.clear();
+
+    players.set(
+      currentPlayer.id,
+      currentPlayer
+    );
+
+    enterGame();
+
+    showRoomCreated();
+
+    return;
+  }
+
+
+  if (data.type === "joined") {
+
+    roomCodeValue =
+      data.room;
+
+    currentPlayer =
+      data.player;
+
+    players.clear();
+
+    for (const player of data.players || []) {
+
+      players.set(
+        player.id,
+        player
+      );
+
+    }
+
+    enterGame();
+
+    return;
+  }
+
+
+  if (data.type === "playerJoined") {
+
+    players.set(
+      data.player.id,
+      data.player
+    );
+
+    showMessage(
+      `${data.player.name} đã vào phòng.`
+    );
+
+    return;
+  }
+
+
+  if (data.type === "playerMoved") {
+
+    players.set(
+      data.player.id,
+      data.player
+    );
+
+    if (
+      currentPlayer &&
+      data.player.id === currentPlayer.id
+    ) {
+
+      currentPlayer =
+        data.player;
+
+      updateHUD();
+
+    }
+
+    return;
+  }
+
+
+  if (data.type === "playerLeft") {
+
+    players.delete(
+      data.id
+    );
+
+    return;
+  }
+
+
+  if (data.type === "moneyUpdate") {
+
+    if (currentPlayer) {
+
+      currentPlayer.money =
+        data.money;
+
+      currentPlayer.reputation =
+        data.reputation;
+
+      currentPlayer.shops =
+        data.shops;
+
+    }
+
+    updateHUD();
+
+    if (data.message) {
+
+      showMessage(
+        data.message
+      );
+
+    }
+
+    return;
+  }
+
+
+  if (data.type === "message") {
+
+    showMessage(
+      data.message
+    );
+
+    return;
+  }
+
+
+  if (data.type === "error") {
+
+    setStatus(
+      data.message ||
+      "Có lỗi xảy ra."
+    );
+
+    showMessage(
+      data.message ||
+      "Có lỗi xảy ra."
+    );
+
+    return;
+  }
+
+}
+
+
+/* =========================
+   VÀO GAME
+========================= */
+
+function enterGame() {
+
+  document
+    .getElementById("menu")
+    .style.display = "none";
+
+  document
+    .getElementById("gameScreen")
+    .style.display = "block";
+
+  document
+    .getElementById("roomCode")
+    .textContent =
+      roomCodeValue;
+
+  updateHUD();
+
+  startGameLoop();
+
+  showMessage(
+    "🎮 Vào game thành công!"
+  );
+
+}
+
+
+/* =========================
+   HUD
+========================= */
+
+function updateHUD() {
+
+  if (!currentPlayer) {
+    return;
+  }
+
+  document
+    .getElementById("hudName")
+    .textContent =
+      currentPlayer.name;
+
+  document
+    .getElementById("money")
+    .textContent =
+      currentPlayer.money;
+
+  document
+    .getElementById("reputation")
+    .textContent =
+      currentPlayer.reputation;
+
+  document
+    .getElementById("shops")
+    .textContent =
+      currentPlayer.shops;
+
+  document
+    .getElementById("roomCode")
+    .textContent =
+      roomCodeValue;
+
+}
+
+
+/* =========================
+   CHẠY XE
+========================= */
+
+function doBike() {
+
+  send({
+    type: "bike"
+  });
+
+}
+
+
+/* =========================
+   MUA SẠP
+========================= */
+
+function buyShop() {
+
+  send({
+    type: "buyShop"
+  });
+
+}
+
+
+/* =========================
+   DI CHUYỂN
+========================= */
+
+function startMove(direction) {
+
+  moving = true;
+
+  moveDirection =
+    direction;
+
+}
+
+function stopMove() {
+
+  moving = false;
+
+  moveDirection =
+    null;
+
+}
+
+
+/* =========================
+   DI CHUYỂN GAME
+========================= */
+
+function updateMovement() {
+
+  if (
+    !moving ||
+    !currentPlayer
+  ) {
+    return;
+  }
+
+  const speed = 5;
+
+  let x =
+    currentPlayer.x;
+
+  let y =
+    currentPlayer.y;
+
+  if (moveDirection === "left") {
+    x -= speed;
+  }
+
+  if (moveDirection === "right") {
+    x += speed;
+  }
+
+  if (moveDirection === "up") {
+    y -= speed;
+  }
+
+  if (moveDirection === "down") {
+    y += speed;
+  }
+
+  x =
+    Math.max(
+      30,
+      Math.min(
+        GAME_WIDTH - 30,
+        x
+      )
+    );
+
+  y =
+    Math.max(
+      80,
+      Math.min(
+        GAME_HEIGHT - 30,
+        y
+      )
+    );
+
+  currentPlayer.x = x;
+
+  currentPlayer.y = y;
+
+  players.set(
+    currentPlayer.id,
+    currentPlayer
+  );
+
+  send({
+    type: "move",
+    x,
+    y
+  });
+
+}
+
+
+/* =========================
+   VẼ GAME
+========================= */
+
+function drawGame() {
+
+  ctx.clearRect(
+    0,
+    0,
+    GAME_WIDTH,
+    GAME_HEIGHT
+  );
+
+  /* nền */
+  ctx.fillStyle = "#8dcc70";
+
+  ctx.fillRect(
+    0,
+    0,
+    GAME_WIDTH,
+    GAME_HEIGHT
+  );
+
+
+  /* đường */
+  ctx.fillStyle = "#cfa66b";
+
+  ctx.fillRect(
+    0,
+    270,
+    GAME_WIDTH,
+    180
+  );
+
+  ctx.fillStyle = "#ead19e";
+
+  ctx.fillRect(
+    0,
+    330,
+    GAME_WIDTH,
+    60
+  );
+
+
+  /* khu phố */
+  ctx.fillStyle = "#78ad5d";
+
+  ctx.fillRect(
+    0,
+    0,
+    GAME_WIDTH,
+    270
+  );
+
+  ctx.fillRect(
+    0,
+    450,
+    GAME_WIDTH,
+    270
+  );
+
+
+  /* vạch đường */
+  ctx.strokeStyle = "#fff1b7";
+
+  ctx.lineWidth = 5;
+
+  ctx.setLineDash([
+    30,
+    25
+  ]);
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    0,
+    360
+  );
+
+  ctx.lineTo(
+    GAME_WIDTH,
+    360
+  );
+
+  ctx.stroke();
+
+  ctx.setLineDash([]);
+
+
+  /* sạp */
+  drawShop(
+    150,
+    130,
+    "🏪"
+  );
+
+  drawShop(
+    1000,
+    130,
+    "🏬"
+  );
+
+  drawShop(
+    180,
+    560,
+    "🍜"
+  );
+
+  drawShop(
+    1000,
+    560,
+    "☕"
+  );
+
+
+  /* người chơi */
+  for (
+    const player
+    of players.values()
+  ) {
+
+    drawPlayer(
+      player
+    );
+
+  }
+
+}
+
+
+/* =========================
+   VẼ SẠP
+========================= */
+
+function drawShop(
+  x,
+  y,
+  emoji
+) {
+
+  ctx.fillStyle =
+    "rgba(255,255,255,0.9)";
+
+  ctx.beginPath();
+
+  ctx.roundRect(
+    x,
+    y,
+    110,
+    65,
+    12
+  );
+
+  ctx.fill();
+
+  ctx.font =
+    "34px Arial";
+
+  ctx.textAlign =
+    "center";
+
+  ctx.textBaseline =
+    "middle";
+
+  ctx.fillText(
+    emoji,
+    x + 55,
+    y + 32
+  );
+
+}
+
+
+/* =========================
+   VẼ NHÂN VẬT
+========================= */
+
+function drawPlayer(
+  player
+) {
+
+  const isMe =
+    currentPlayer &&
+    player.id === currentPlayer.id;
+
+  /* bóng */
+  ctx.fillStyle =
+    "rgba(0,0,0,0.18)";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    player.x,
+    player.y + 22,
+    20,
+    8,
+    0,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+
+  /* thân */
+  ctx.fillStyle =
+    player.gender === "female"
+      ? "#d65d8c"
+      : "#477fc4";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    player.x,
+    player.y,
+    18,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+
+  /* mặt */
+  ctx.fillStyle =
+    "#ffd1a3";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    player.x,
+    player.y - 17,
+    13,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+
+  /* tên */
+  ctx.font =
+    "bold 13px Arial";
+
+  ctx.textAlign =
+    "center";
+
+  ctx.textBaseline =
+    "bottom";
+
+  ctx.fillStyle =
+    isMe
+      ? "#a33f12"
+      : "#33251c";
+
+  ctx.fillText(
+    player.name,
+    player.x,
+    player.y - 35
+  );
+
+
+  if (isMe) {
+
+    ctx.font =
+      "18px Arial";
+
+    ctx.fillText(
+      "⭐",
+      player.x,
+      player.y + 42
+    );
+
+  }
+
+}
+
+
+/* =========================
+   GAME LOOP
+========================= */
+
+function gameLoop() {
+
+  updateMovement();
+
+  drawGame();
+
+  animationId =
+    requestAnimationFrame(
+      gameLoop
+    );
+
+}
+
+function startGameLoop() {
+
+  if (animationId) {
+    return;
+  }
+
+  gameLoop();
+
+}
+
+
+/* =========================
+   THÔNG BÁO
+========================= */
+
+let messageTimer = null;
+
+function showMessage(text) {
+
+  const element =
+    document.getElementById(
+      "message"
+    );
+
+  element.textContent =
+    text;
+
+  element.classList.add(
+    "show"
+  );
+
+  clearTimeout(
+    messageTimer
+  );
+
+  messageTimer =
+    setTimeout(() => {
+
+      element.classList.remove(
+        "show"
+      );
+
+    }, 2500);
+
+}
+
+
+/* =========================
+   STATUS
+========================= */
+
+function setStatus(text) {
+
+  document
+    .getElementById("status")
+    .textContent =
+      text;
+
+}
+
+
+/* =========================
+   LẤY TÊN
+========================= */
+
+function getPlayerName() {
+
+  return document
+    .getElementById("playerName")
+    .value
+    .trim()
+    .slice(0, 18);
+
+}
+
+
+/* =========================
+   HIỆN MÃ PHÒNG
+========================= */
+
+function showRoomCreated() {
+
+  document
+    .getElementById("roomInfo")
+    .innerHTML = `
+      <div class="room-code">
+        <div>Mã phòng của bạn</div>
+        <strong>${roomCodeValue}</strong>
+        <div style="margin-top:6px">
+          Gửi mã này cho người chơi khác.
+        </div>
+      </div>
+    `;
+
+}
+
+
+/* =========================
+   THOÁT GAME
+========================= */
+
+function leaveGame() {
+
+  if (socket) {
+
+    socket.close();
+
+  }
+
+  location.reload();
+
+}
+
+
+/* =========================
+   PHÍM BÀN PHÍM
+========================= */
+
+document.addEventListener(
+  "keydown",
+  (event) => {
+
+    if (
+      event.key === "ArrowLeft" ||
+      event.key.toLowerCase() === "a"
+    ) {
+
+      startMove("left");
+
+    }
+
+    if (
+      event.key === "ArrowRight" ||
+      event.key.toLowerCase() === "d"
+    ) {
+
+      startMove("right");
+
+    }
+
+    if (
+      event.key === "ArrowUp" ||
+      event.key.toLowerCase() === "w"
+    ) {
+
+      startMove("up");
+
+    }
+
+    if (
+      event.key === "ArrowDown" ||
+      event.key.toLowerCase() === "s"
+    ) {
+
+      startMove("down");
+
+    }
+
+  }
+);
+
+
+document.addEventListener(
+  "keyup",
+  (event) => {
+
+    if (
+      [
+        "ArrowLeft",
+        "ArrowRight",
+        "ArrowUp",
+        "ArrowDown",
+        "a",
+        "d",
+        "w",
+        "s"
+      ].includes(event.key)
+    ) {
+
+      stopMove();
+
+    }
+
+  }
+);
+
+
+/* =========================
+   KHỞI ĐỘNG
+========================= */
+
+window.addEventListener(
+  "load",
+  () => {
+
+    connectSocket();
+
+    drawGame();
+
+  }
+);
+
+</script>
+
+</body>
+</html>
