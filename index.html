@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Game 3D Buông Gì Bán - Chuyên Sâu</title>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: sans-serif; background: #0f172a; color: #f8fafc; user-select: none; }
+        #canvas-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
+        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; padding: 15px; }
+        .interactive { pointer-events: auto; }
+        
+        #login-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.96); z-index: 100; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+        .modal-box { background: #1e293b; border: 2px solid #3b82f6; padding: 30px; border-radius: 14px; text-align: center; width: 320px; box-shadow: 0 20px 25px rgba(0,0,0,0.5); }
+        .modal-box input, .modal-box select { width: 100%; padding: 12px; margin: 10px 0; background: #0f172a; border: 1px solid #475569; color: #fff; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .btn { background: #3b82f6; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; transition: 0.2s; }
+        .btn:hover { background: #2563eb; }
+
+        .hud-top { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
+        .hud-panel { background: rgba(15, 23, 42, 0.8); padding: 10px 15px; border-radius: 10px; backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.1); font-size: 13px; }
+        
+        .hud-bottom { display: flex; justify-content: space-between; align-items: flex-end; width: 100%; }
+        .menu-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .menu-btn { background: rgba(30, 41, 59, 0.9); border: 1px solid rgba(255,255,255,0.15); color: white; padding: 9px; border-radius: 8px; cursor: pointer; font-size: 12px; text-align: center; backdrop-filter: blur(4px); transition: 0.2s; }
+        .menu-btn:hover { background: #3b82f6; }
+
+        .joystick-container { width: 120px; height: 120px; background: rgba(255,255,255,0.05); border-radius: 50%; position: relative; border: 2px solid rgba(255,255,255,0.15); touch-action: none; }
+        .joystick-thumb { width: 50px; height: 50px; background: rgba(255,255,255,0.4); border-radius: 50%; position: absolute; top: 33px; left: 33px; pointer-events: none; transition: transform 0.05s; }
+        
+        .action-btns { display: flex; flex-direction: column; gap: 10px; }
+        .action-round-btn { width: 60px; height: 60px; border-radius: 50%; background: #f59e0b; border: none; color: white; font-weight: bold; font-size: 12px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; text-align: center; }
+        
+        .chat-container { width: 280px; height: 130px; background: rgba(15, 23, 42, 0.8); border-radius: 8px; display: flex; flex-direction: column; padding: 6px; border: 1px solid rgba(255,255,255,0.1); }
+        .chat-messages { flex: 1; overflow-y: auto; font-size: 11px; margin-bottom: 4px; display: flex; flex-direction: column; gap: 3px; }
+        .chat-input-row { display: flex; gap: 4px; }
+        .chat-input-row input { flex: 1; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: white; padding: 5px; border-radius: 6px; font-size: 11px; }
+
+        .modal-menu { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 420px; max-height: 80vh; background: #1e293b; border: 2px solid #475569; border-radius: 12px; padding: 20px; z-index: 50; box-sizing: border-box; overflow-y: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.7); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 12px; }
+        .close-btn { background: #ef4444; border: none; color: white; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .list-row { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #334155; font-size: 13px; }
+        
+        #toast { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(16, 185, 129, 0.95); color: white; padding: 10px 20px; border-radius: 8px; font-weight: bold; z-index: 200; display: none; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="toast">Thông báo</div>
+
+    <div id="login-screen">
+        <div class="modal-box">
+            <h2>🏙️ Buông Gì Bán 3D</h2>
+            <p style="font-size: 12px; color: #94a3b8; margin-bottom: 15px;">Thế giới mở mô phỏng đời thực</p>
+            <input type="text" id="input-name" placeholder="Tên nhân vật..." maxlength="15">
+            <select id="select-gender">
+                <option value="Nam">Nam</option>
+                <option value="Nữ">Nữ</option>
+            </select>
+            <button class="btn" onclick="joinGame()">Vào Thành Phố</button>
+        </div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <div class="ui-layer">
+        <div class="hud-top">
+            <div class="hud-panel">
+                👤 <span id="hud-name">Player</span> | 💼 <span id="hud-job">Tự do</span><br>
+                💰 <span id="hud-money">5000</span> VNĐ | ⚡ Năng lượng: <span id="hud-energy">100</span>%
+            </div>
+            <div class="hud-panel" style="text-align: right;">
+                📅 Ngày <span id="hud-day">1</span> - ⏰ <span id="hud-time">08:00</span><br>
+                🌤️ Thời tiết: <span id="hud-weather">Nắng</span>
+            </div>
+        </div>
+
+        <div id="generic-modal" class="modal-menu">
+            <div class="modal-header">
+                <h3 id="modal-title">Tiêu đề</h3>
+                <button class="close-btn" onclick="closeModal()">Đóng</button>
+            </div>
+            <div id="modal-content">Nội dung</div>
+        </div>
+
+        <div class="hud-bottom">
+            <div class="interactive joystick-container" id="joystick">
+                <div class="joystick-thumb" id="joystick-thumb"></div>
+            </div>
+
+            <div class="interactive" style="display: flex; flex-direction: column; gap: 6px; align-items: center;">
+                <div class="menu-buttons">
+                    <button class="menu-btn" onclick="openInventoryModal()">Túi Đồ</button>
+                    <button class="menu-btn" onclick="openMarketModal()">Chợ</button>
+                    <button class="menu-btn" onclick="openJobModal()">Nghề</button>
+                    <button class="menu-btn" onclick="openBusinessModal()">Kinh Doanh</button>
+                    <button class="menu-btn" onclick="openFurnitureModal()">Nội Thất</button>
+                    <button class="menu-btn" onclick="toggleBike()">🛵 Xe Máy</button>
+                    <button class="menu-btn" onclick="openServiceModal()">Dịch Vụ</button>
+                    <button class="menu-btn" onclick="openMapModal()">Bản Đồ</button>
+                </div>
+                <div class="chat-container">
+                    <div class="chat-messages" id="chat-messages">
+                        <div><b>Hệ thống:</b> Đã kết nối thành công vào thành phố!</div>
+                    </div>
+                    <div class="chat-input-row">
+                        <input type="text" id="chat-input" placeholder="Nhập chat..." onkeydown="handleChatKey(event)">
+                        <button class="btn" style="width: auto; padding: 3px 8px;" onclick="sendChat()">Gửi</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="interactive action-btns">
+                <button class="action-round-btn" onclick="interactAction()">Tương Tác</button>
+                <button class="action-round-btn" style="background: #3b82f6;" onclick="callVehicle()">Gọi Xe</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ws;
+        let myId = null;
+        let myData = { name: 'Cư dân', gender: 'Nam', x: 0, y: 0, z: 5, rotY: 0, money: 5000, energy: 100, hunger: 100, job: 'Tự do', inventory: {}, onBike: false };
+        let serverState = { world: { day: 1, hour: 8, minute: 0, weather: 'Nắng', marketPrices: {} }, players: {}, npcs: [], vehicles: [], businesses: {} };
+
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0f172a);
+        scene.fog = new THREE.FogExp2(0x0f172a, 0.012);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(ambientLight);
+
+        const sunLight = new THREE.DirectionalLight(0xfffaed, 1.0);
+        sunLight.position.set(60, 120, 60);
+        sunLight.castShadow = true;
+        scene.add(sunLight);
+
+        const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.9 }));
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        const roadMat = new THREE.MeshStandardMaterial({ color: 0x0f172a });
+        const r1 = new THREE.Mesh(new THREE.PlaneGeometry(400, 14), roadMat);
+        r1.rotation.x = -Math.PI / 2; r1.position.y = 0.02; scene.add(r1);
+        const r2 = new THREE.Mesh(new THREE.PlaneGeometry(14, 400), roadMat);
+        r2.rotation.x = -Math.PI / 2; r2.position.y = 0.02; scene.add(r2);
+
+        for (let x = -150; x <= 150; x += 35) {
+            for (let z = -150; z <= 150; z += 35) {
+                if (Math.abs(x) < 25 || Math.abs(z) < 25) continue;
+                let h = 20 + Math.random() * 30;
+                let b = new THREE.Mesh(new THREE.BoxGeometry(18, h, 18), new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 }));
+                b.position.set(x, h / 2, z); b.castShadow = true; b.receiveShadow = true;
+                scene.add(b);
+            }
+        }
+
+        const playerGroup = new THREE.Group();
+        const pBody = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 1.7, 16), new THREE.MeshStandardMaterial({ color: 0x3b82f6 }));
+        pBody.position.y = 0.85; pBody.castShadow = true; playerGroup.add(pBody);
+        const pHead = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 16), new THREE.MeshStandardMaterial({ color: 0xfde047 }));
+        pHead.position.y = 1.85; pHead.castShadow = true; playerGroup.add(pHead);
+        scene.add(playerGroup);
+
+        let otherMeshes = {}, npcMeshes = {}, vehicleMeshes = {};
+        let moveX = 0, moveZ = 0;
+        let keys = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowLeft: false, ArrowDown: false, ArrowRight: false };
+
+        window.addEventListener('keydown', (e) => { if (keys.hasOwnProperty(e.key)) keys[e.key] = true; });
+        window.addEventListener('keyup', (e) => { if (keys.hasOwnProperty(e.key)) keys[e.key] = false; });
+
+        const joystick = document.getElementById('joystick');
+        const thumb = document.getElementById('joystick-thumb');
+        let joystickActive = false, jCenter = { x: 0, y: 0 };
+
+        joystick.addEventListener('pointerdown', (e) => {
+            joystickActive = true;
+            let rect = joystick.getBoundingClientRect();
+            jCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+        });
+
+        window.addEventListener('pointermove', (e) => {
+            if (!joystickActive) return;
+            let dx = e.clientX - jCenter.x, dy = e.clientY - jCenter.y;
+            let dist = Math.min(50, Math.sqrt(dx * dx + dy * dy)), angle = Math.atan2(dy, dx);
+            thumb.style.transform = `translate(${Math.cos(angle) * dist}px, ${Math.sin(angle) * dist}px)`;
+            moveX = (Math.cos(angle) * dist) / 50; moveZ = (Math.sin(angle) * dist) / 50;
+        });
+
+        window.addEventListener('pointerup', () => {
+            if (joystickActive) { joystickActive = false; thumb.style.transform = `translate(0px, 0px)`; moveX = 0; moveZ = 0; }
+        });
+
+        function joinGame() {
+            let nInput = document.getElementById('input-name').value.trim();
+            if (nInput) myData.name = nInput;
+            myData.gender = document.getElementById('select-gender').value;
+
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('hud-name').innerText = myData.name;
+
+            let proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
+            ws = new WebSocket(proto + location.host);
+
+            ws.onopen = () => { ws.send(JSON.stringify({ type: 'join', name: myData.name, gender: myData.gender })); };
+            ws.onmessage = (event) => {
+                let data = JSON.parse(event.data);
+                if (data.type === 'init') myId = data.id;
+                else if (data.type === 'state') { serverState = data; updateHUD(data.world); syncEntities(data); }
+                else if (data.type === 'chat') appendChat(data.sender, data.msg);
+                else if (data.type === 'notify') showToast(data.msg);
+            };
+            ws.onclose = () => { setTimeout(joinGame, 3000); };
+        }
+
+        function updateHUD(world) {
+            document.getElementById('hud-day').innerText = world.day;
+            document.getElementById('hud-time').innerText = String(world.hour).padStart(2, '0') + ':' + String(world.minute).padStart(2, '0');
+            document.getElementById('hud-weather').innerText = world.weather;
+            document.getElementById('hud-money').innerText = myData.money;
+            document.getElementById('hud-energy').innerText = myData.energy;
+            document.getElementById('hud-job').innerText = myData.job;
+        }
+
+        function syncEntities(data) {
+            for (let id in data.players) {
+                if (id === myId) { myData.money = data.players[id].money; myData.inventory = data.players[id].inventory; continue; }
+                let p = data.players[id];
+                if (!otherMeshes[id]) {
+                    let g = new THREE.Group();
+                    let b = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 1.7, 16), new THREE.MeshStandardMaterial({ color: 0x10b981 }));
+                    b.position.y = 0.85; g.add(b); scene.add(g); otherMeshes[id] = g;
+                }
+                otherMeshes[id].position.set(p.x, p.y, p.z);
+            }
+            for (let id in otherMeshes) {
+                if (!data.players[id]) { scene.remove(otherMeshes[id]); delete otherMeshes[id]; }
+            }
+
+            data.npcs.forEach(npc => {
+                if (!npcMeshes[npc.id]) {
+                    let g = new THREE.Group();
+                    let m = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.6, 16), new THREE.MeshStandardMaterial({ color: 0xf59e0b }));
+                    m.position.y = 0.8; g.add(m); scene.add(g); npcMeshes[npc.id] = g;
+                }
+                npcMeshes[npc.id].position.set(npc.x, 0, npc.z);
+            });
+
+            data.vehicles.forEach(veh => {
+                if (!vehicleMeshes[veh.id]) {
+                    let g = new THREE.Group();
+                    let m = new THREE.Mesh(new THREE.BoxGeometry(2.5, 1.2, 5), new THREE.MeshStandardMaterial({ color: 0xef4444 }));
+                    m.position.y = 0.6; g.add(m); scene.add(g); vehicleMeshes[veh.id] = g;
+                }
+                vehicleMeshes[veh.id].position.set(veh.x, 0, veh.z);
+            });
+        }
+
+        const speed = 0.16;
+        function animate() {
+            requestAnimationFrame(animate);
+            let dx = moveX, dz = moveZ;
+            if (keys.w || keys.ArrowUp) dz = -1;
+            if (keys.s || keys.ArrowDown) dz = 1;
+            if (keys.a || keys.ArrowLeft) dx = -1;
+            if (keys.d || keys.ArrowRight) dx = 1;
+
+            if (dx !== 0 || dz !== 0) {
+                myData.x += dx * speed; myData.z += dz * speed;
+                myData.rotY = Math.atan2(dx, dz);
+                playerGroup.rotation.y = myData.rotY;
+            }
+            playerGroup.position.set(myData.x, myData.y, myData.z);
+
+            let tCamX = myData.x - Math.sin(myData.rotY) * 7;
+            let tCamY = myData.y + 4.5;
+            let tCamZ = myData.z - Math.cos(myData.rotY) * 7;
+            camera.position.x += (tCamX - camera.position.x) * 0.1;
+            camera.position.y += (tCamY - camera.position.y) * 0.1;
+            camera.position.z += (tCamZ - camera.position.z) * 0.1;
+            camera.lookAt(myData.x, myData.y + 1, myData.z);
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'update_pos', x: myData.x, y: myData.y, z: myData.z, rotY: myData.rotY, onBike: myData.onBike, anim: (dx !== 0 || dz !== 0 ? 'walk' : 'idle') }));
+            }
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        function openModal(title, content) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-content').innerHTML = content;
+            document.getElementById('generic-modal').style.display = 'block';
+        }
+        function closeModal() { document.getElementById('generic-modal').style.display = 'none'; }
+        function showToast(msg) {
+            let t = document.getElementById('toast');
+            t.innerText = msg; t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 3000);
+        }
+
+        function openInventoryModal() {
+            let html = '';
+            for (let item in myData.inventory) {
+                html += `<div class="list-row"><span>📦 ${item}</span> <b>SL: ${myData.inventory[item]}</b></div>`;
+            }
+            if (!html) html = '<p style="color:#94a3b8">Túi đồ trống.</p>';
+            openModal('🎒 Túi Đồ', html);
+        }
+
+        function openMarketModal() {
+            let html = '';
+            for (let item in serverState.world.marketPrices) {
+                let price = serverState.world.marketPrices[item];
+                html += `<div class="list-row"><span>🛒 ${item} (${price} VNĐ)</span> <button class="btn" style="width:auto; padding:5px 12px;" onclick="buyItem('${item}')">Mua</button></div>`;
+            }
+            openModal('🛒 Chợ Toàn Cầu', html);
+        }
+        function buyItem(item) { ws.send(JSON.stringify({ type: 'buy_market', item: item, qty: 1 })); }
+
+        function openJobModal() {
+            let html = `<p>Công việc: <b>${myData.job}</b></p>
+            <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
+                <button class="btn" onclick="setJob('Tài xế xe ôm')">Tài xế xe ôm</button>
+                <button class="btn" onclick="setJob('Nhân viên giao hàng')">Nhân viên giao hàng</button>
+                <button class="btn" onclick="setJob('Đầu bếp')">Đầu bếp</button>
+            </div>`;
+            openModal('💼 Việc Làm', html);
+        }
+        function setJob(j) { myData.job = j; showToast(`Nhận việc: ${j}`); closeModal(); }
+
+        function openBusinessModal() {
+            let html = '';
+            for (let id in serverState.businesses) {
+                let b = serverState.businesses[id];
+                html += `<div class="list-row" style="flex-direction:column; align-items:flex-start; gap:6px;">
+                    <div>🏪 <b>${b.name}</b> (${b.type})</div>
+                    <div>Quỹ: ${b.funds} VNĐ | ${b.isOpen ? 'Mở cửa' : 'Đóng cửa'}</div>
+                    ${b.owner === myId ? `<button class="btn" style="width:auto; padding:4px 10px;" onclick="toggleBiz('${id}')">${b.isOpen ? 'Đóng' : 'Mở'}</button>` : `<button class="btn" style="width:auto; padding:4px 10px;" onclick="buyBiz('${id}')">Mua (5000 VNĐ)</button>`}
+                </div>`;
+            }
+            openModal('🏪 Kinh Doanh', html);
+        }
+        function buyBiz(id) { ws.send(JSON.stringify({ type: 'manage_business', businessId: id, action: 'buy' })); }
+        function toggleBiz(id) { ws.send(JSON.stringify({ type: 'manage_business', businessId: id, action: 'toggle' })); }
+
+        function openFurnitureModal() { openModal('🪑 Nội Thất', '<p>Trang trí bàn ghế, máy pha cà phê cho cơ sở.</p>'); }
+        function openServiceModal() { openModal('🏨 Dịch Vụ', '<p>Đặt phòng khách sạn, gọi xe dịch vụ.</p>'); }
+        function openMapModal() { openModal('🗺 Bản Đồ', '<p>GPS định vị toàn thành phố trực tuyến.</p>'); }
+        function toggleBike() { myData.onBike = !myData.onBike; showToast(myData.onBike ? 'Đã lên xe máy!' : 'Đã xuống xe máy!'); }
+        function interactAction() { showToast('💡 Không có vật thể tương tác gần đây.'); }
+        function callVehicle() { showToast('🛺 Xe dịch vụ đang tới!'); }
+
+        function sendChat() {
+            let input = document.getElementById('chat-input'), text = input.value.trim();
+            if (text && ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'chat', msg: text }));
+                input.value = '';
+            }
+        }
+        function handleChatKey(e) { if (e.key === 'Enter') sendChat(); }
+        function appendChat(sender, msg) {
+            let box = document.getElementById('chat-messages'), div = document.createElement('div');
+            div.innerHTML = `<b>${sender}:</b> ${msg}`; box.appendChild(div); box.scrollTop = box.scrollHeight;
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
