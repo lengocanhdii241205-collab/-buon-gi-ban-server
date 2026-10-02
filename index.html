@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>BUÔN GÌ BÁN</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    background: #111;
+}
+
+canvas {
+    display: block;
+}
+
+#hud {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 10;
+
+    color: white;
+    background: rgba(0,0,0,.7);
+
+    padding: 15px;
+    border-radius: 15px;
+
+    min-width: 220px;
+
+    line-height: 1.7;
+}
+
+#help {
+    position: fixed;
+    bottom: 15px;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    z-index: 10;
+
+    color: white;
+    background: rgba(0,0,0,.7);
+
+    padding: 10px 18px;
+
+    border-radius: 12px;
+
+    text-align: center;
+}
+
+#menu {
+    position: fixed;
+
+    top: 50%;
+    left: 50%;
+
+    transform: translate(-50%, -50%);
+
+    width: 360px;
+    max-height: 80vh;
+
+    overflow-y: auto;
+
+    z-index: 20;
+
+    background: rgba(20,20,30,.96);
+
+    color: white;
+
+    padding: 20px;
+
+    border-radius: 20px;
+
+    display: none;
+}
+
+#menu button {
+    padding: 10px 15px;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.item {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+}
+
+.lock {
+    opacity: .4;
+}
+
+#crosshair {
+    position: fixed;
+
+    left: 50%;
+    top: 50%;
+
+    transform: translate(-50%,-50%);
+
+    color: white;
+
+    font-size: 22px;
+
+    z-index: 15;
+
+    pointer-events: none;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="hud"></div>
+
+<div id="crosshair">+</div>
+
+<div id="help">
+WASD: Di chuyển |
+SHIFT: Chạy |
+Chuột: Nhìn |
+E: Nấu món |
+H: Nhập nguyên liệu |
+M: Thực đơn
+</div>
+
+<div id="menu"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
+<script>
+
+////////////////////////////////////////////////////
+// DỮ LIỆU GAME
+////////////////////////////////////////////////////
+
+let game = {
+
+    money: 500000,
+
+    level: 1,
+
+    exp: 0,
+
+    stock: 20,
+
+    day: 1,
+
+    rating: 5,
+
+    sold: 0,
+
+    weather: "Nắng"
+
+};
+
+const foods = [
+
+    ["Mì trứng",18000,1],
+    ["Cơm gà",32000,1],
+    ["Bánh mì thịt",22000,1],
+
+    ["Mì bò",42000,2],
+    ["Cơm sườn",45000,2],
+
+    ["Gà chiên",38000,3],
+    ["Khoai chiên",20000,3],
+
+    ["Mì cay",48000,4],
+    ["Cơm bò sốt",55000,4],
+
+    ["Bún thịt nướng",45000,5],
+    ["Cơm chiên hải sản",65000,5],
+
+    ["Pizza mini",60000,6],
+    ["Mì hải sản",70000,6],
+
+    ["Bò lúc lắc",85000,7],
+    ["Gà sốt cay",62000,7],
+
+    ["Lẩu mini",110000,8],
+    ["Steak sốt tiêu",150000,8],
+
+    ["Sushi set",135000,9],
+    ["Combo nhà hàng",180000,9],
+
+    ["Đại tiệc đặc biệt",250000,10]
+
+];
+
+const drinks = [
+
+    ["Nước suối",10000,1],
+    ["Nước ngọt",15000,1],
+    ["Trà đá",8000,1],
+
+    ["Cà phê sữa",25000,2],
+    ["Trà chanh",22000,2],
+
+    ["Trà đào",28000,3],
+    ["Nước cam",30000,3],
+
+    ["Trà sữa",35000,4],
+
+    ["Matcha latte",42000,5],
+    ["Cacao đá",38000,5],
+
+    ["Sinh tố dâu",45000,6],
+    ["Nước ép dứa",40000,6],
+
+    ["Cold brew",48000,7],
+    ["Soda trái cây",50000,7],
+
+    ["Matcha dâu",55000,8],
+    ["Đá xay socola",60000,8],
+
+    ["Trà sữa đặc biệt",65000,9],
+    ["Nước ép premium",70000,9],
+
+    ["Mocktail hoàng gia",90000,10]
+
+];
+
+////////////////////////////////////////////////////
+// LƯU GAME
+////////////////////////////////////////////////////
+
+function saveGame() {
+
+    localStorage.setItem(
+        "BUON_GI_BAN_SAVE",
+        JSON.stringify(game)
+    );
+
+}
+
+function loadGame() {
+
+    let save = localStorage.getItem(
+        "BUON_GI_BAN_SAVE"
+    );
+
+    if (save) {
+
+        try {
+
+            game = JSON.parse(save);
+
+        } catch {
+
+            console.log("Save lỗi");
+
+        }
+
+    }
+
+}
+
+loadGame();
+
+////////////////////////////////////////////////////
+// HUD
+////////////////////////////////////////////////////
+
+function updateHUD() {
+
+    document.getElementById("hud").innerHTML =
+
+    "<b>🍜 BUÔN GÌ BÁN</b><br><br>" +
+
+    "💰 Tiền: " +
+    game.money.toLocaleString("vi-VN") +
+    "đ<br>" +
+
+    "⭐ Đánh giá: " +
+    game.rating.toFixed(1) +
+    "/5<br>" +
+
+    "🏆 Cấp: " +
+    game.level +
+    "<br>" +
+
+    "✨ EXP: " +
+    game.exp +
+    "/" +
+    (game.level * 100) +
+    "<br>" +
+
+    "📦 Nguyên liệu: " +
+    game.stock +
+    "<br>" +
+
+    "📅 Ngày: " +
+    game.day +
+    "<br>" +
+
+    "☀️ Thời tiết: " +
+    game.weather +
+    "<br>" +
+
+    "🍜 Đã bán: " +
+    game.sold;
+
+}
+
+updateHUD();
+
+////////////////////////////////////////////////////
+// LÊN CẤP
+////////////////////////////////////////////////////
+
+function checkLevel() {
+
+    let needed = game.level * 100;
+
+    if (game.exp >= needed) {
+
+        game.exp -= needed;
+
+        game.level++;
+
+        game.rating = Math.min(
+            5,
+            game.rating + .1
+        );
+
+        alert(
+            "🎉 CHÚC MỪNG!\n\n" +
+            "Bạn đã lên cấp " +
+            game.level +
+            "!"
+        );
+
+    }
+
+}
+
+////////////////////////////////////////////////////
+// CHỌN MÓN
+////////////////////////////////////////////////////
+
+function randomFood() {
+
+    let available = foods.filter(
+        item => item[2] <= game.level
+    );
+
+    return available[
+        Math.floor(
+            Math.random() * available.length
+        )
+    ];
+
+}
+
+////////////////////////////////////////////////////
+// NẤU ĂN
+////////////////////////////////////////////////////
+
+function cookFood() {
+
+    if (game.stock <= 0) {
+
+        alert(
+            "❌ Hết nguyên liệu!\n\n" +
+            "Nhấn H để nhập thêm."
+        );
+
+        return;
+
+    }
+
+    let food = randomFood();
+
+    game.stock--;
+
+    game.money += food[1];
+
+    game.exp += 10;
+
+    game.sold++;
+
+    game.rating += .02;
+
+    if (game.rating > 5)
+        game.rating = 5;
+
+    checkLevel();
+
+    saveGame();
+
+    updateHUD();
+
+    alert(
+
+        "👨‍🍳 Bạn vừa tự nấu:\n\n" +
+
+        food[0] +
+
+        "\n\n💰 +" +
+
+        food[1].toLocaleString("vi-VN") +
+
+        "đ"
+
+    );
+
+}
+
+////////////////////////////////////////////////////
+// NHẬP NGUYÊN LIỆU
+////////////////////////////////////////////////////
+
+function buyIngredients() {
+
+    const price = 50000;
+
+    if (game.money < price) {
+
+        alert("❌ Không đủ tiền!");
+
+        return;
+
+    }
+
+    game.money -= price;
+
+    game.stock += 20;
+
+    saveGame();
+
+    updateHUD();
+
+    alert(
+        "📦 Đã nhập 20 nguyên liệu!"
+    );
+
+}
+
+////////////////////////////////////////////////////
+// MENU
+////////////////////////////////////////////////////
+
+function openMenu() {
+
+    const menu =
+        document.getElementById("menu");
+
+    let html =
+
+        "<h2>🍜 THỰC ĐƠN</h2>";
+
+    html += "<h3>Đồ ăn</h3>";
+
+    foods.forEach(food => {
+
+        let locked =
+            food[2] > game.level;
+
+        html +=
+
+        `<div class="item ${locked ? "lock" : ""}">
+
+        ${locked ? "🔒" : "🍜"}
+
+        ${food[0]}
+
+        —
+
+        ${food[1].toLocaleString("vi-VN")}đ
+
+        <small>
+        (Lv.${food[2]})
+        </small>
+
+        </div>`;
+
+    });
+
+    html += "<h3>Đồ uống</h3>";
+
+    drinks.forEach(drink => {
+
+        let locked =
+            drink[2] > game.level;
+
+        html +=
+
+        `<div class="item ${locked ? "lock" : ""}">
+
+        ${locked ? "🔒" : "🥤"}
+
+        ${drink[0]}
+
+        —
+
+        ${drink[1].toLocaleString("vi-VN")}đ
+
+        <small>
+        (Lv.${drink[2]})
+        </small>
+
+        </div>`;
+
+    });
+
+    html +=
+
+        "<br><button onclick=\"closeMenu()\">" +
+        "Đóng" +
+        "</button>";
+
+    menu.innerHTML = html;
+
+    menu.style.display = "block";
+
+}
+
+function closeMenu() {
+
+    document.getElementById(
+        "menu"
+    ).style.display = "none";
+
+}
+
+////////////////////////////////////////////////////
+// THREE.JS
+////////////////////////////////////////////////////
+
+const scene =
+    new THREE.Scene();
+
+scene.background =
+    new THREE.Color(0x8fd3ff);
+
+scene.fog =
+    new THREE.Fog(
+        0x8fd3ff,
+        30,
+        100
+    );
+
+const camera =
+    new THREE.PerspectiveCamera(
+        70,
+        innerWidth / innerHeight,
+        .1,
+        200
+    );
+
+camera.position.set(
+    0,
+    1.7,
+    12
+);
+
+const renderer =
+    new THREE.WebGLRenderer({
+        antialias: true
+    });
+
+renderer.setSize(
+    innerWidth,
+    innerHeight
+);
+
+renderer.setPixelRatio(
+    Math.min(
+        devicePixelRatio,
+        2
+    )
+);
+
+renderer.shadowMap.enabled = true;
+
+document.body.appendChild(
+    renderer.domElement
+);
+
+////////////////////////////////////////////////////
+// ÁNH SÁNG
+////////////////////////////////////////////////////
+
+scene.add(
+    new THREE.HemisphereLight(
+        0xffffff,
+        0x777777,
+        2
+    )
+);
+
+const sun =
+    new THREE.DirectionalLight(
+        0xffffff,
+        2
+    );
+
+sun.position.set(
+    20,
+    30,
+    10
+);
+
+sun.castShadow = true;
+
+scene.add(sun);
+
+////////////////////////////////////////////////////
+// TẠO KHỐI
+////////////////////////////////////////////////////
+
+function createBox(
+    width,
+    height,
+    depth,
+    color,
+    x,
+    y,
+    z
+) {
+
+    const geometry =
+        new THREE.BoxGeometry(
+            width,
+            height,
+            depth
+        );
+
+    const material =
+        new THREE.MeshStandardMaterial({
+            color: color
+        });
+
+    const object =
+        new THREE.Mesh(
+            geometry,
+            material
+        );
+
+    object.position.set(
+        x,
+        y,
+        z
+    );
+
+    object.castShadow = true;
+
+    object.receiveShadow = true;
+
+    scene.add(object);
+
+    return object;
+
+}
+
+////////////////////////////////////////////////////
+// MẶT ĐẤT
+////////////////////////////////////////////////////
+
+createBox(
+    100,
+    .2,
+    100,
+    0x66bb66,
+    0,
+    0,
+    0
+);
+
+////////////////////////////////////////////////////
+// ĐƯỜNG
+////////////////////////////////////////////////////
+
+createBox(
+    20,
+    .1,
+    100,
+    0x444444,
+    25,
+    .1,
+    0
+);
+
+////////////////////////////////////////////////////
+// NHÀ HÀNG
+////////////////////////////////////////////////////
+
+createBox(
+    24,
+    7,
+    18,
+    0xffd0a0,
+    0,
+    3.5,
+    -4
+);
+
+////////////////////////////////////////////////////
+// MÁI
+////////////////////////////////////////////////////
+
+createBox(
+    26,
+    1,
+    20,
+    0xff6688,
+    0,
+    7.5,
+    -4
+);
+
+////////////////////////////////////////////////////
+// CỬA KÍNH
+////////////////////////////////////////////////////
+
+createBox(
+    8,
+    4,
+    .2,
+    0x88ddff,
+    0,
+    3,
+    5
+);
+
+////////////////////////////////////////////////////
+// QUẦY BẾP
+////////////////////////////////////////////////////
+
+createBox(
+    7,
+    1,
+    3,
+    0x704c3c,
+    -6,
+    1,
+    -2
+);
+
+////////////////////////////////////////////////////
+// BÀN
+////////////////////////////////////////////////////
+
+function createTable(x,z) {
+
+    createBox(
+        2.5,
+        .3,
+        2.5,
+        0xffcc77,
+        x,
+        1.3,
+        z
+    );
+
+    createBox(
+        .3,
+        1.2,
+        .3,
+        0x663d2d,
+        x,
+        .6,
+        z
+    );
+
+}
+
+createTable(-2,-2);
+createTable(3,-2);
+createTable(-2,3);
+createTable(3,3);
+
+////////////////////////////////////////////////////
+// NPC
+////////////////////////////////////////////////////
+
+const customers = [];
+
+function createCustomer() {
+
+    const group =
+        new THREE.Group();
+
+    const body =
+        new THREE.Mesh(
+
+            new THREE.CylinderGeometry(
+                .4,
+                .45,
+                1,
+                12
+            ),
+
+            new THREE.MeshStandardMaterial({
+                color:
+                    Math.random() *
+                    0xffffff
+            })
+
+        );
+
+    body.position.y = .7;
+
+    group.add(body);
+
+    const head =
+        new THREE.Mesh(
+
+            new THREE.SphereGeometry(
+                .4,
+                16,
+                12
+            ),
+
+            new THREE.MeshStandardMaterial({
+                color: 0xffd0b0
+            })
+
+        );
+
+    head.position.y = 1.5;
+
+    group.add(head);
+
+    group.position.set(
+        Math.random() * 14 - 7,
+        0,
+        10 + Math.random() * 10
+    );
+
+    scene.add(group);
+
+    customers.push({
+
+        object: group,
+
+        target: new THREE.Vector3(
+            Math.random() * 10 - 5,
+            0,
+            Math.random() * 10 - 3
+        )
+
+    });
+
+}
+
+for (
+    let i = 0;
+    i < 8;
+    i++
+) {
+
+    createCustomer();
+
+}
+
+////////////////////////////////////////////////////
+// ĐIỀU KHIỂN
+////////////////////////////////////////////////////
+
+const keys = {};
+
+let yaw = 0;
+let pitch = 0;
+
+let mouseLocked = false;
+
+document.addEventListener(
+    "keydown",
+    event => {
+
+        keys[event.code] = true;
+
+        if (
+            event.code === "KeyE"
+        ) {
+
+            cookFood();
+
+        }
+
+        if (
+            event.code === "KeyH"
+        ) {
+
+            buyIngredients();
+
+        }
+
+        if (
+            event.code === "KeyM"
+        ) {
+
+            openMenu();
+
+        }
+
+        if (
+            event.code === "Escape"
+        ) {
+
+            closeMenu();
+
+        }
+
+    }
+);
+
+document.addEventListener(
+    "keyup",
+    event => {
+
+        keys[event.code] = false;
+
+    }
+);
+
+renderer.domElement.addEventListener(
+    "click",
+    () => {
+
+        renderer.domElement.requestPointerLock();
+
+    }
+);
+
+document.addEventListener(
+    "pointerlockchange",
+    () => {
+
+        mouseLocked =
+            document.pointerLockElement ===
+            renderer.domElement;
+
+    }
+);
+
+document.addEventListener(
+    "mousemove",
+    event => {
+
+        if (!mouseLocked)
+            return;
+
+        yaw -=
+            event.movementX *
+            .002;
+
+        pitch -=
+            event.movementY *
+            .002;
+
+        pitch =
+            Math.max(
+                -1.4,
+                Math.min(
+                    1.4,
+                    pitch
+                )
+            );
+
+    }
+);
+
+////////////////////////////////////////////////////
+// GAME LOOP
+////////////////////////////////////////////////////
+
+let lastTime =
+    performance.now();
+
+let dayTimer = 0;
+
+function animate(time) {
+
+    requestAnimationFrame(
+        animate
+    );
+
+    const delta =
+        Math.min(
+            .05,
+            (time - lastTime) / 1000
+        );
+
+    lastTime = time;
+
+    ////////////////////////////////////////////////////
+    // DI CHUYỂN
+    ////////////////////////////////////////////////////
+
+    const speed =
+        (
+            keys.ShiftLeft ||
+            keys.ShiftRight
+        )
+        ? 7
+        : 3.5;
+
+    const movement =
+        new THREE.Vector3();
+
+    if (keys.KeyW)
+        movement.z -= 1;
+
+    if (keys.KeyS)
+        movement.z += 1;
+
+    if (keys.KeyA)
+        movement.x -= 1;
+
+    if (keys.KeyD)
+        movement.x += 1;
+
+    if (movement.length() > 0)
+        movement.normalize();
+
+    const forward =
+        new THREE.Vector3(
+            Math.sin(yaw),
+            0,
+            Math.cos(yaw)
+        );
+
+    const right =
+        new THREE.Vector3(
+            Math.cos(yaw),
+            0,
+            -Math.sin(yaw)
+        );
+
+    camera.position.addScaledVector(
+        forward,
+        movement.z * speed * delta
+    );
+
+    camera.position.addScaledVector(
+        right,
+        movement.x * speed * delta
+    );
+
+    camera.position.x =
+        Math.max(
+            -10,
+            Math.min(
+                10,
+                camera.position.x
+            )
+        );
+
+    camera.position.z =
+        Math.max(
+            -10,
+            Math.min(
+                25,
+                camera.position.z
+            )
+        );
+
+    camera.position.y = 1.7;
+
+    camera.rotation.order =
+        "YXZ";
+
+    camera.rotation.y =
+        yaw;
+
+    camera.rotation.x =
+        pitch;
+
+    ////////////////////////////////////////////////////
+    // NPC
+    ////////////////////////////////////////////////////
+
+    customers.forEach(customer => {
+
+        const direction =
+            customer.target
+            .clone()
+            .sub(customer.object.position);
+
+        direction.y = 0;
+
+        if (
+            direction.length() < .5
+        ) {
+
+            customer.target.set(
+                Math.random() * 12 - 6,
+                0,
+                Math.random() * 15 - 5
+            );
+
+        } else {
+
+            direction.normalize();
+
+            customer.object.position.addScaledVector(
+                direction,
+                delta * 1.2
+            );
+
+        }
+
+    });
+
+    ////////////////////////////////////////////////////
+    // NGÀY
+    ////////////////////////////////////////////////////
+
+    dayTimer += delta;
+
+    if (dayTimer >= 45) {
+
+        dayTimer = 0;
+
+        game.day++;
+
+        const weather =
+            [
+                "Nắng",
+                "Nắng",
+                "Nhiều mây",
+                "Mưa"
+            ];
+
+        game.weather =
+            weather[
+                Math.floor(
+                    Math.random() *
+                    weather.length
+                )
+            ];
+
+        ////////////////////////////////////////////////////
+        // CHỦ NHẬT
+        ////////////////////////////////////////////////////
+
+        if (
+            game.day % 7 === 0
+        ) {
+
+            const tax =
+                Math.floor(
+                    game.money * .05
+                );
+
+            game.money =
+                Math.max(
+                    0,
+                    game.money - tax
+                );
+
+            alert(
+                "☀️ CHỦ NHẬT!\n\n" +
+                "Thuế tuần: " +
+                tax.toLocaleString("vi-VN") +
+                "đ"
+            );
+
+        }
+
+        ////////////////////////////////////////////////////
+        // NGÀY 25
+        ////////////////////////////////////////////////////
+
+        if (
+            game.day % 25 === 0
+        ) {
+
+            const rent = 150000;
+
+            game.money =
+                Math.max(
+                    0,
+                    game.money - rent
+                );
+
+            alert(
+                "🏠 ĐẾN HẠN TIỀN THUÊ!\n\n" +
+                "Đã trả: " +
+                rent.toLocaleString("vi-VN") +
+                "đ"
+            );
+
+        }
+
+        saveGame();
+
+        updateHUD();
+
+    }
+
+    renderer.render(
+        scene,
+        camera
+    );
+
+}
+
+animate(
+    performance.now()
+);
+
+////////////////////////////////////////////////////
+// RESIZE
+////////////////////////////////////////////////////
+
+window.addEventListener(
+    "resize",
+    () => {
+
+        camera.aspect =
+            innerWidth /
+            innerHeight;
+
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(
+            innerWidth,
+            innerHeight
+        );
+
+    }
+);
+
+</script>
+
+</body>
+</html>
