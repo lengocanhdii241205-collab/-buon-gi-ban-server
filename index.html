@@ -1,0 +1,1687 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>BUÔN GÌ BÁN</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  user-select:none;
+  -webkit-user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#9fd9ed;
+  font-family:Arial,sans-serif;
+  touch-action:none;
+}
+
+#game{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+}
+
+#ui{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+}
+
+#top{
+  position:absolute;
+  top:10px;
+  left:10px;
+  right:10px;
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:7px;
+}
+
+.box{
+  background:rgba(255,255,255,.94);
+  color:#654638;
+  padding:9px 13px;
+  border-radius:15px;
+  font-weight:800;
+  box-shadow:0 4px 12px #0002;
+}
+
+#title{
+  width:100%;
+  text-align:center;
+  font-size:20px;
+  color:#74482f;
+}
+
+#message{
+  position:absolute;
+  top:100px;
+  left:50%;
+  transform:translateX(-50%);
+  background:white;
+  color:#604536;
+  padding:10px 18px;
+  border-radius:18px;
+  font-weight:bold;
+  text-align:center;
+  max-width:85%;
+  box-shadow:0 5px 15px #0002;
+}
+
+button{
+  pointer-events:auto;
+  border:0;
+}
+
+#openButton{
+  position:absolute;
+  right:22px;
+  bottom:25px;
+  padding:14px 20px;
+  border-radius:18px;
+  background:#ffae4c;
+  color:white;
+  font-size:16px;
+  font-weight:900;
+  box-shadow:0 5px 0 #d27e27;
+}
+
+#talkButton{
+  position:absolute;
+  right:22px;
+  bottom:92px;
+  width:58px;
+  height:58px;
+  border-radius:50%;
+  background:white;
+  font-size:25px;
+  box-shadow:0 5px 15px #0002;
+}
+
+#joystick{
+  position:absolute;
+  left:20px;
+  bottom:20px;
+  width:125px;
+  height:125px;
+  border-radius:50%;
+  background:#ffffff44;
+  border:3px solid #ffffff88;
+  pointer-events:auto;
+}
+
+#stick{
+  position:absolute;
+  width:55px;
+  height:55px;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:#ffffffcc;
+  border:3px solid white;
+}
+
+@media(max-width:600px){
+  #title{
+    font-size:17px;
+  }
+
+  .box{
+    font-size:12px;
+    padding:7px 9px;
+  }
+
+  #message{
+    top:92px;
+    font-size:13px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="game"></canvas>
+
+<div id="ui">
+
+  <div id="top">
+
+    <div id="title" class="box">
+      🏠 BUÔN GÌ BÁN
+    </div>
+
+    <div class="box">
+      💰 <span id="money">500000</span>đ
+    </div>
+
+    <div class="box">
+      ⭐ Cấp <span id="level">1</span>
+    </div>
+
+    <div class="box">
+      📅 Ngày <span id="day">1</span>
+    </div>
+
+    <div class="box">
+      ❤️ <span id="rating">5.0</span>
+    </div>
+
+  </div>
+
+  <div id="message">
+    🏠 Chào mừng đến với BUÔN GÌ BÁN!
+  </div>
+
+  <button id="openButton">
+    🏪 MỞ CỬA
+  </button>
+
+  <button id="talkButton">
+    💬
+  </button>
+
+  <div id="joystick">
+    <div id="stick"></div>
+  </div>
+
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   CANVAS
+========================================================= */
+
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+
+let W=innerWidth;
+let H=innerHeight;
+let DPR=1;
+
+function resize(){
+
+  W=innerWidth;
+  H=innerHeight;
+
+  DPR=Math.min(devicePixelRatio||1,2);
+
+  canvas.width=W*DPR;
+  canvas.height=H*DPR;
+
+  canvas.style.width=W+"px";
+  canvas.style.height=H+"px";
+
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+
+addEventListener("resize",resize);
+resize();
+
+/* =========================================================
+   UI
+========================================================= */
+
+const moneyEl=document.getElementById("money");
+const levelEl=document.getElementById("level");
+const dayEl=document.getElementById("day");
+const ratingEl=document.getElementById("rating");
+const messageEl=document.getElementById("message");
+const openButton=document.getElementById("openButton");
+const talkButton=document.getElementById("talkButton");
+
+function updateUI(){
+
+  moneyEl.textContent=
+    Math.floor(game.money).toLocaleString("vi-VN");
+
+  levelEl.textContent=game.level;
+  dayEl.textContent=game.day;
+  ratingEl.textContent=game.rating.toFixed(1);
+
+  openButton.textContent=
+    game.open
+      ?"🔴 ĐÓNG CỬA"
+      :"🏪 MỞ CỬA";
+}
+
+/* =========================================================
+   SAVE
+========================================================= */
+
+const SAVE_NAME="BUON_GI_BAN_SAVE";
+
+const game={
+  money:500000,
+  level:1,
+  day:1,
+  rating:5,
+  exp:0,
+  open:false
+};
+
+try{
+
+  const saved=
+    localStorage.getItem(SAVE_NAME);
+
+  if(saved){
+
+    Object.assign(
+      game,
+      JSON.parse(saved)
+    );
+  }
+
+}catch(e){}
+
+function saveGame(){
+
+  try{
+
+    localStorage.setItem(
+      SAVE_NAME,
+      JSON.stringify(game)
+    );
+
+  }catch(e){}
+
+}
+
+updateUI();
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+let messageTimeout;
+
+function message(text,time=2800){
+
+  messageEl.textContent=text;
+
+  clearTimeout(messageTimeout);
+
+  messageTimeout=setTimeout(()=>{
+
+    messageEl.textContent=
+      game.open
+        ?"🏪 Cửa hàng đang mở!"
+        :"🏠 Hãy mở cửa hàng để bán hàng.";
+
+  },time);
+}
+
+/* =========================================================
+   WORLD
+========================================================= */
+
+const world={
+  width:1800,
+  height:1100
+};
+
+const camera={
+  x:0,
+  y:0
+};
+
+/* =========================================================
+   PLAYER
+========================================================= */
+
+const player={
+  x:900,
+  y:760,
+  speed:4,
+  dir:"down",
+  moving:false
+};
+
+/* =========================================================
+   KEYBOARD
+========================================================= */
+
+const keys={};
+
+addEventListener("keydown",e=>{
+
+  keys[e.key.toLowerCase()]=true;
+
+  if(
+    e.key.startsWith("Arrow")
+  ){
+    e.preventDefault();
+  }
+
+});
+
+addEventListener("keyup",e=>{
+
+  keys[e.key.toLowerCase()]=false;
+
+});
+
+/* =========================================================
+   JOYSTICK
+========================================================= */
+
+const joystick=
+  document.getElementById("joystick");
+
+const stick=
+  document.getElementById("stick");
+
+let joyX=0;
+let joyY=0;
+let joyActive=false;
+
+function setJoystick(x,y){
+
+  const r=
+    joystick.getBoundingClientRect();
+
+  const cx=
+    r.left+r.width/2;
+
+  const cy=
+    r.top+r.height/2;
+
+  let dx=x-cx;
+  let dy=y-cy;
+
+  const max=43;
+
+  const distance=
+    Math.hypot(dx,dy);
+
+  if(distance>max){
+
+    dx=dx/distance*max;
+    dy=dy/distance*max;
+
+  }
+
+  joyX=dx/max;
+  joyY=dy/max;
+
+  stick.style.transform=
+    `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`;
+}
+
+function resetJoystick(){
+
+  joyActive=false;
+  joyX=0;
+  joyY=0;
+
+  stick.style.transform=
+    "translate(-50%,-50%)";
+}
+
+joystick.addEventListener("pointerdown",e=>{
+
+  joyActive=true;
+
+  joystick.setPointerCapture(
+    e.pointerId
+  );
+
+  setJoystick(
+    e.clientX,
+    e.clientY
+  );
+});
+
+joystick.addEventListener("pointermove",e=>{
+
+  if(!joyActive)return;
+
+  setJoystick(
+    e.clientX,
+    e.clientY
+  );
+});
+
+joystick.addEventListener(
+  "pointerup",
+  resetJoystick
+);
+
+joystick.addEventListener(
+  "pointercancel",
+  resetJoystick
+);
+
+/* =========================================================
+   ROOMS
+========================================================= */
+
+const rooms=[
+
+  {
+    x:80,
+    y:90,
+    w:480,
+    h:360,
+    color:"#f8dce5",
+    name:"PHÒNG NGỦ"
+  },
+
+  {
+    x:610,
+    y:90,
+    w:510,
+    h:360,
+    color:"#dff1df",
+    name:"PHÒNG KHÁCH"
+  },
+
+  {
+    x:1170,
+    y:90,
+    w:550,
+    h:760,
+    color:"#fff0cf",
+    name:"CỬA HÀNG"
+  }
+
+];
+
+/* =========================================================
+   FURNITURE
+========================================================= */
+
+const furniture=[
+
+  {
+    type:"bed",
+    x:150,
+    y:175,
+    w:260,
+    h:125
+  },
+
+  {
+    type:"cabinet",
+    x:455,
+    y:180,
+    w:70,
+    h:180
+  },
+
+  {
+    type:"sofa",
+    x:700,
+    y:205,
+    w:270,
+    h:100
+  },
+
+  {
+    type:"table",
+    x:750,
+    y:345,
+    w:180,
+    h:80
+  },
+
+  {
+    type:"tv",
+    x:1000,
+    y:165,
+    w:75,
+    h:55
+  },
+
+  {
+    type:"counter",
+    x:1250,
+    y:170,
+    w:330,
+    h:90
+  },
+
+  {
+    type:"table",
+    x:1240,
+    y:350,
+    w:150,
+    h:80
+  },
+
+  {
+    type:"table",
+    x:1490,
+    y:350,
+    w:150,
+    h:80
+  },
+
+  {
+    type:"table",
+    x:1240,
+    y:560,
+    w:150,
+    h:80
+  },
+
+  {
+    type:"table",
+    x:1490,
+    y:560,
+    w:150,
+    h:80
+  }
+
+];
+
+/* =========================================================
+   NPC
+========================================================= */
+
+const npcs=[
+
+  {
+    name:"Lan",
+    x:780,
+    y:500,
+    tx:850,
+    ty:350,
+    color:"#ff91ad",
+    hair:"#543d4c",
+    speed:1.2,
+    bubble:"",
+    bubbleTime:0
+  },
+
+  {
+    name:"Minh",
+    x:1400,
+    y:500,
+    tx:1500,
+    ty:450,
+    color:"#72a8e8",
+    hair:"#393238",
+    speed:1.1,
+    bubble:"",
+    bubbleTime:0
+  },
+
+  {
+    name:"Mai",
+    x:1550,
+    y:700,
+    tx:1400,
+    ty:700,
+    color:"#a982e7",
+    hair:"#543d50",
+    speed:1.1,
+    bubble:"",
+    bubbleTime:0
+  }
+
+];
+
+/* =========================================================
+   DRAW HELPERS
+========================================================= */
+
+function rounded(
+  x,y,w,h,r,color
+){
+
+  ctx.fillStyle=color;
+
+  ctx.beginPath();
+
+  ctx.roundRect(
+    x,y,w,h,r
+  );
+
+  ctx.fill();
+}
+
+function line(
+  x1,y1,x2,y2,color,width
+){
+
+  ctx.strokeStyle=color;
+  ctx.lineWidth=width;
+
+  ctx.beginPath();
+  ctx.moveTo(x1,y1);
+  ctx.lineTo(x2,y2);
+  ctx.stroke();
+}
+
+/* =========================================================
+   WORLD
+========================================================= */
+
+function drawWorld(){
+
+  /* cỏ */
+
+  ctx.fillStyle="#b5dcae";
+
+  ctx.fillRect(
+    0,0,
+    world.width,
+    world.height
+  );
+
+  /* đường */
+
+  ctx.fillStyle="#d8c6a7";
+
+  ctx.fillRect(
+    0,850,
+    world.width,
+    250
+  );
+
+  /* nền nhà */
+
+  rounded(
+    40,50,
+    1680,800,
+    20,
+    "#f5eddd"
+  );
+
+  /* rooms */
+
+  for(const room of rooms){
+
+    rounded(
+      room.x,
+      room.y,
+      room.w,
+      room.h,
+      15,
+      room.color
+    );
+
+    ctx.strokeStyle="#bd9b79";
+    ctx.lineWidth=5;
+
+    ctx.strokeRect(
+      room.x,
+      room.y,
+      room.w,
+      room.h
+    );
+
+    ctx.fillStyle="#765640";
+    ctx.font="bold 22px Arial";
+    ctx.textAlign="center";
+
+    ctx.fillText(
+      room.name,
+      room.x+room.w/2,
+      room.y+35
+    );
+  }
+
+  /* cửa */
+
+  rounded(
+    1080,400,
+    90,110,
+    8,
+    "#a97653"
+  );
+
+  rounded(
+    1660,690,
+    60,110,
+    5,
+    "#a97653"
+  );
+
+  /* windows */
+
+  drawWindow(120,60);
+  drawWindow(680,60);
+  drawWindow(1250,60);
+  drawWindow(1500,60);
+
+  drawFurniture();
+
+  drawPlants();
+}
+
+/* =========================================================
+   WINDOWS
+========================================================= */
+
+function drawWindow(x,y){
+
+  rounded(
+    x,y,
+    110,65,
+    10,
+    "#91d4ec"
+  );
+
+  ctx.strokeStyle="#876c55";
+  ctx.lineWidth=5;
+
+  ctx.strokeRect(
+    x,y,
+    110,65
+  );
+
+  line(
+    x+55,y+4,
+    x+55,y+61,
+    "#ffffff",
+    6
+  );
+
+  line(
+    x+5,y+32,
+    x+105,y+32,
+    "#ffffff",
+    6
+  );
+}
+
+/* =========================================================
+   PLANTS
+========================================================= */
+
+function drawPlants(){
+
+  const plants=[
+    [90,780],
+    [1080,780],
+    [1660,180],
+    [1660,810]
+  ];
+
+  for(const [x,y] of plants){
+
+    ctx.fillStyle="#8f6547";
+
+    ctx.fillRect(
+      x-10,y,
+      20,30
+    );
+
+    ctx.fillStyle="#69ad70";
+
+    for(let i=0;i<5;i++){
+
+      ctx.beginPath();
+
+      ctx.arc(
+        x+Math.cos(i*1.25)*20,
+        y-20+Math.sin(i)*15,
+        15,
+        0,
+        Math.PI*2
+      );
+
+      ctx.fill();
+    }
+  }
+}
+
+/* =========================================================
+   FURNITURE
+========================================================= */
+
+function drawFurniture(){
+
+  for(const f of furniture){
+
+    if(f.type==="bed")
+      drawBed(f);
+
+    if(f.type==="cabinet")
+      drawCabinet(f);
+
+    if(f.type==="sofa")
+      drawSofa(f);
+
+    if(f.type==="table")
+      drawTable(f);
+
+    if(f.type==="tv")
+      drawTV(f);
+
+    if(f.type==="counter")
+      drawCounter(f);
+
+  }
+}
+
+function drawBed(f){
+
+  rounded(
+    f.x,f.y,
+    f.w,f.h,
+    18,
+    "#d28ca5"
+  );
+
+  rounded(
+    f.x+12,
+    f.y+12,
+    f.w-24,
+    f.h-24,
+    14,
+    "#fff5f6"
+  );
+
+  rounded(
+    f.x+22,
+    f.y+20,
+    80,52,
+    10,
+    "#f2c8d5"
+  );
+}
+
+function drawCabinet(f){
+
+  rounded(
+    f.x,f.y,
+    f.w,f.h,
+    10,
+    "#a66e4f"
+  );
+
+  for(let i=0;i<3;i++){
+
+    rounded(
+      f.x+8,
+      f.y+10+i*55,
+      f.w-16,
+      42,
+      6,
+      "#bd805c"
+    );
+  }
+}
+
+function drawSofa(f){
+
+  rounded(
+    f.x,
+    f.y+20,
+    f.w,
+    f.h-20,
+    18,
+    "#83bb98"
+  );
+
+  rounded(
+    f.x+12,
+    f.y,
+    f.w-24,
+    55,
+    18,
+    "#a5d3b4"
+  );
+}
+
+function drawTable(f){
+
+  ctx.fillStyle="#a9724e";
+
+  ctx.fillRect(
+    f.x+15,
+    f.y+f.h-10,
+    f.w-30,
+    20
+  );
+
+  rounded(
+    f.x,
+    f.y,
+    f.w,
+    f.h-20,
+    16,
+    "#dfa66b"
+  );
+
+  ctx.fillStyle="#fff5cf";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    f.x+f.w/2,
+    f.y+25,
+    12,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+}
+
+function drawTV(f){
+
+  rounded(
+    f.x,f.y,
+    f.w,f.h,
+    8,
+    "#414857"
+  );
+
+  rounded(
+    f.x+7,
+    f.y+7,
+    f.w-14,
+    f.h-18,
+    5,
+    "#83d0e6"
+  );
+}
+
+function drawCounter(f){
+
+  rounded(
+    f.x,f.y,
+    f.w,f.h,
+    15,
+    "#a76e4d"
+  );
+
+  rounded(
+    f.x+10,
+    f.y+10,
+    f.w-20,
+    35,
+    10,
+    "#e0a36a"
+  );
+
+  for(let i=0;i<4;i++){
+
+    rounded(
+      f.x+15+i*76,
+      f.y+58,
+      60,
+      20,
+      5,
+      "#8b563e"
+    );
+  }
+}
+
+/* =========================================================
+   CHARACTER
+========================================================= */
+
+function drawCharacter(
+  x,y,
+  body,hair,
+  isPlayer=false
+){
+
+  ctx.save();
+
+  ctx.translate(x,y);
+
+  /* shadow */
+
+  ctx.fillStyle="#00000022";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    0,28,
+    25,9,
+    0,0,Math.PI*2
+  );
+
+  ctx.fill();
+
+  /* legs */
+
+  ctx.fillStyle="#5a4746";
+
+  ctx.fillRect(-13,9,10,25);
+  ctx.fillRect(3,9,10,25);
+
+  /* body */
+
+  rounded(
+    -25,-20,
+    50,45,
+    17,
+    body
+  );
+
+  /* head */
+
+  ctx.fillStyle="#ffd4b5";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    0,-43,
+    27,
+    0,Math.PI*2
+  );
+
+  ctx.fill();
+
+  /* hair */
+
+  ctx.fillStyle=hair;
+
+  ctx.beginPath();
+
+  ctx.arc(
+    0,-49,
+    29,
+    Math.PI,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+  ctx.beginPath();
+
+  ctx.arc(
+    -20,-43,
+    11,
+    0,Math.PI*2
+  );
+
+  ctx.fill();
+
+  ctx.beginPath();
+
+  ctx.arc(
+    20,-43,
+    11,
+    0,Math.PI*2
+  );
+
+  ctx.fill();
+
+  /* eyes */
+
+  ctx.fillStyle="#30262b";
+
+  ctx.beginPath();
+  ctx.arc(-9,-42,3.5,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(9,-42,3.5,0,Math.PI*2);
+  ctx.fill();
+
+  /* cheeks */
+
+  ctx.fillStyle="#ff8d9a66";
+
+  ctx.beginPath();
+  ctx.arc(-17,-34,5,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(17,-34,5,0,Math.PI*2);
+  ctx.fill();
+
+  /* player marker */
+
+  if(isPlayer){
+
+    ctx.fillStyle="#ffe16b";
+
+    ctx.beginPath();
+
+    ctx.moveTo(0,-84);
+    ctx.lineTo(-10,-70);
+    ctx.lineTo(10,-70);
+
+    ctx.closePath();
+
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+/* =========================================================
+   BUBBLE
+========================================================= */
+
+function bubble(
+  x,y,text
+){
+
+  ctx.save();
+
+  ctx.font="bold 13px Arial";
+
+  const width=
+    ctx.measureText(text).width+24;
+
+  rounded(
+    x-width/2,
+    y-35,
+    width,
+    32,
+    12,
+    "#ffffff"
+  );
+
+  ctx.fillStyle="#594238";
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
+
+  ctx.fillText(
+    text,
+    x,
+    y-19
+  );
+
+  ctx.restore();
+}
+
+/* =========================================================
+   NPC UPDATE
+========================================================= */
+
+function updateNPCs(){
+
+  for(const npc of npcs){
+
+    const dx=npc.tx-npc.x;
+    const dy=npc.ty-npc.y;
+
+    const d=Math.hypot(dx,dy);
+
+    if(d<8){
+
+      if(npc.name==="Lan"){
+
+        npc.tx=670+Math.random()*350;
+        npc.ty=170+Math.random()*220;
+
+      }else{
+
+        npc.tx=1220+Math.random()*450;
+        npc.ty=300+Math.random()*480;
+
+      }
+
+    }else{
+
+      npc.x+=dx/d*npc.speed;
+      npc.y+=dy/d*npc.speed;
+
+    }
+
+    if(npc.bubbleTime>0)
+      npc.bubbleTime--;
+  }
+}
+
+/* =========================================================
+   PLAYER UPDATE
+========================================================= */
+
+function updatePlayer(){
+
+  let dx=0;
+  let dy=0;
+
+  if(keys["w"]||keys["arrowup"])
+    dy--;
+
+  if(keys["s"]||keys["arrowdown"])
+    dy++;
+
+  if(keys["a"]||keys["arrowleft"])
+    dx--;
+
+  if(keys["d"]||keys["arrowright"])
+    dx++;
+
+  if(joyActive){
+
+    dx+=joyX;
+    dy+=joyY;
+
+  }
+
+  const d=Math.hypot(dx,dy);
+
+  player.moving=d>0.05;
+
+  if(d>0){
+
+    dx/=d;
+    dy/=d;
+
+    player.x+=dx*player.speed;
+    player.y+=dy*player.speed;
+
+    if(Math.abs(dx)>Math.abs(dy))
+      player.dir=dx>0?"right":"left";
+    else
+      player.dir=dy>0?"down":"up";
+  }
+
+  player.x=
+    Math.max(
+      70,
+      Math.min(
+        world.width-70,
+        player.x
+      )
+    );
+
+  player.y=
+    Math.max(
+      70,
+      Math.min(
+        world.height-70,
+        player.y
+      )
+    );
+}
+
+/* =========================================================
+   CAMERA
+========================================================= */
+
+function updateCamera(){
+
+  camera.x=
+    player.x-W/2;
+
+  camera.y=
+    player.y-H/2;
+
+  camera.x=
+    Math.max(
+      0,
+      Math.min(
+        Math.max(0,world.width-W),
+        camera.x
+      )
+    );
+
+  camera.y=
+    Math.max(
+      0,
+      Math.min(
+        Math.max(0,world.height-H),
+        camera.y
+      )
+    );
+}
+
+/* =========================================================
+   DRAW
+========================================================= */
+
+function draw(){
+
+  ctx.clearRect(
+    0,0,W,H
+  );
+
+  ctx.save();
+
+  ctx.translate(
+    -camera.x,
+    -camera.y
+  );
+
+  drawWorld();
+
+  /* NPC */
+
+  for(const npc of npcs){
+
+    drawCharacter(
+      npc.x,
+      npc.y,
+      npc.color,
+      npc.hair
+    );
+
+    ctx.fillStyle="#5c4438";
+    ctx.font="bold 13px Arial";
+    ctx.textAlign="center";
+
+    ctx.fillText(
+      npc.name,
+      npc.x,
+      npc.y-80
+    );
+
+    if(npc.bubbleTime>0){
+
+      bubble(
+        npc.x,
+        npc.y-88,
+        npc.bubble
+      );
+    }
+  }
+
+  /* PLAYER */
+
+  drawCharacter(
+    player.x,
+    player.y,
+    "#72a7ed",
+    "#473b50",
+    true
+  );
+
+  ctx.restore();
+}
+
+/* =========================================================
+   TALK
+========================================================= */
+
+function talk(){
+
+  let nearest=null;
+  let nearestDistance=Infinity;
+
+  for(const npc of npcs){
+
+    const d=
+      Math.hypot(
+        npc.x-player.x,
+        npc.y-player.y
+      );
+
+    if(d<nearestDistance){
+
+      nearestDistance=d;
+      nearest=npc;
+    }
+  }
+
+  if(
+    !nearest ||
+    nearestDistance>145
+  ){
+
+    message(
+      "💬 Đi lại gần NPC để nói chuyện."
+    );
+
+    return;
+  }
+
+  const lines={
+
+    Lan:[
+      "Hôm nay quán đông ghê!",
+      "Món ăn ở đây ngon quá!",
+      "Nhớ phục vụ khách nha!"
+    ],
+
+    Minh:[
+      "Cho mình xem menu!",
+      "Quán dễ thương quá!",
+      "Mình sẽ quay lại!"
+    ],
+
+    Mai:[
+      "Có món mới chưa?",
+      "Mình thích trà sữa!",
+      "Hôm nay vui ghê!"
+    ]
+
+  };
+
+  const list=lines[nearest.name];
+
+  nearest.bubble=
+    list[
+      Math.floor(
+        Math.random()*list.length
+      )
+    ];
+
+  nearest.bubbleTime=180;
+
+  message(
+    nearest.name+": "+nearest.bubble,
+    3500
+  );
+}
+
+talkButton.addEventListener(
+  "click",
+  talk
+);
+
+/* =========================================================
+   OPEN SHOP
+========================================================= */
+
+openButton.addEventListener(
+  "click",
+  ()=>{
+
+    game.open=!game.open;
+
+    updateUI();
+    saveGame();
+
+    message(
+      game.open
+        ?"🏪 Đã mở cửa! Khách bắt đầu tới."
+        :"🔴 Đã đóng cửa hàng."
+    );
+  }
+);
+
+/* =========================================================
+   BUSINESS
+========================================================= */
+
+let businessTimer=0;
+
+function business(){
+
+  if(!game.open)return;
+
+  businessTimer++;
+
+  if(businessTimer>=720){
+
+    businessTimer=0;
+
+    const income=
+      25000+
+      Math.floor(
+        Math.random()*45000
+      );
+
+    game.money+=income;
+    game.exp+=10;
+
+    if(Math.random()<0.3){
+
+      game.rating=
+        Math.min(
+          5,
+          game.rating+0.1
+        );
+    }
+
+    if(
+      game.exp>=game.level*100 &&
+      game.level<10
+    ){
+
+      game.exp-=game.level*100;
+      game.level++;
+
+      message(
+        "🎉 Lên cấp "+game.level+"!",
+        4000
+      );
+    }
+
+    updateUI();
+    saveGame();
+
+    message(
+      "🧾 Khách thanh toán +"+
+      income.toLocaleString("vi-VN")+
+      "đ"
+    );
+  }
+}
+
+/* =========================================================
+   DAY
+========================================================= */
+
+let dayTimer=0;
+
+function updateDay(){
+
+  dayTimer++;
+
+  if(dayTimer>=3600){
+
+    dayTimer=0;
+
+    game.day++;
+
+    /* Chủ nhật */
+
+    if(game.day%7===0){
+
+      const tax=
+        Math.floor(
+          game.money*0.05
+        );
+
+      game.money-=tax;
+
+      message(
+        "📋 Chủ nhật: thuế -"+
+        tax.toLocaleString("vi-VN")+
+        "đ",
+        4000
+      );
+    }
+
+    /* Ngày 25 */
+
+    if(game.day%25===0){
+
+      game.money-=200000;
+
+      message(
+        "🏠 Tiền thuê nhà -200.000đ",
+        4000
+      );
+    }
+
+    updateUI();
+    saveGame();
+  }
+}
+
+/* =========================================================
+   RANDOM NPC CHAT
+========================================================= */
+
+let npcChatTimer=0;
+
+function randomNPCChat(){
+
+  npcChatTimer++;
+
+  if(npcChatTimer<900)return;
+
+  npcChatTimer=0;
+
+  const npc=
+    npcs[
+      Math.floor(
+        Math.random()*npcs.length
+      )
+    ];
+
+  const lines=[
+    "Xin chào!",
+    "Quán đẹp quá!",
+    "Mình muốn gọi món!",
+    "Hôm nay đông khách ghê!",
+    "Có món mới không?"
+  ];
+
+  npc.bubble=
+    lines[
+      Math.floor(
+        Math.random()*lines.length
+      )
+    ];
+
+  npc.bubbleTime=150;
+}
+
+/* =========================================================
+   LOOP
+========================================================= */
+
+function loop(){
+
+  updatePlayer();
+  updateNPCs();
+  updateCamera();
+
+  business();
+  updateDay();
+  randomNPCChat();
+
+  draw();
+
+  requestAnimationFrame(loop);
+}
+
+loop();
+
+addEventListener(
+  "beforeunload",
+  saveGame
+);
+
+message(
+  "🏠 Chào mừng đến với BUÔN GÌ BÁN!",
+  3500
+);
+</script>
+
+</body>
+</html>
