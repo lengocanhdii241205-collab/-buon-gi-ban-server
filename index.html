@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BUÔN GÌ BÁN - Game Mô Phỏng Kinh Doanh Anime Chibi</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background-color: #2c3e50; }
+    #game-container { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+    canvas { display: block; width: 100%; height: 100%; image-rendering: crisp-edges; }
+    
+    /* UI Overlay Elements */
+    .hud { position: absolute; top: 12px; left: 12px; z-index: 10; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .hud-box { background: rgba(255, 255, 255, 0.92); border: 2px solid #8e44ad; border-radius: 12px; padding: 8px 16px; font-weight: bold; color: #2c3e50; box-shadow: 0 4px 10px rgba(0,0,0,0.15); pointer-events: auto; display: flex; align-items: center; gap: 10px; font-size: 14px; }
+    .hud-box span.val { color: #27ae60; font-size: 16px; }
+    
+    .hud-right { position: absolute; top: 12px; right: 12px; z-index: 10; display: flex; gap: 8px; }
+    .btn { background: #3498db; color: white; border: none; padding: 10px 16px; border-radius: 10px; font-weight: bold; cursor: pointer; box-shadow: 0 4px #2980b9; transition: all 0.1s; font-size: 13px; }
+    .btn:active { transform: translateY(2px); box-shadow: 0 2px #2980b9; }
+    .btn-green { background: #2ecc71; box-shadow: 0 4px #27ae60; }
+    .btn-green:active { box-shadow: 0 2px #27ae60; }
+    .btn-orange { background: #e67e22; box-shadow: 0 4px #d35400; }
+    .btn-orange:active { box-shadow: 0 2px #d35400; }
+    
+    /* Interactive Action Button */
+    #action-btn { position: absolute; bottom: 30px; right: 30px; z-index: 20; width: 90px; height: 90px; border-radius: 50%; background: #e74c3c; color: white; border: 4px solid #fff; font-size: 15px; font-weight: bold; display: none; justify-content: center; align-items: center; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,0.3); cursor: pointer; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.06); } 100% { transform: scale(1); } }
+    
+    /* Mobile Joystick Controls */
+    #joystick-zone { position: absolute; bottom: 30px; left: 30px; width: 120px; height: 120px; z-index: 20; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.4); border-radius: 50%; touch-action: none; display: none; }
+    #joystick-stick { position: absolute; top: 35px; left: 35px; width: 50px; height: 50px; background: rgba(255, 255, 255, 0.8); border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+
+    /* Modal Popups */
+    .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 100; display: none; justify-content: center; align-items: center; }
+    .modal-content { background: white; border-radius: 16px; width: 90%; max-width: 550px; max-height: 85vh; overflow-y: auto; padding: 20px; border: 3px solid #8e44ad; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    .modal-header { font-size: 20px; font-weight: bold; color: #2c3e50; margin-bottom: 12px; border-bottom: 2px solid #eee; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .close-btn { cursor: pointer; color: #e74c3c; font-weight: bold; font-size: 22px; }
+    .grid-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 12px; }
+    .card-item { border: 2px solid #e0e0e0; border-radius: 10px; padding: 10px; text-align: center; background: #fafafa; }
+    .card-item.active { border-color: #27ae60; background: #e8f8f5; }
+
+    /* Character Creation Modal Specifics */
+    #creation-modal { display: flex; z-index: 200; background: #2c3e50; }
+    .avatar-preview { width: 120px; height: 140px; margin: 0 auto 15px auto; border: 2px solid #ddd; border-radius: 12px; background: #f9f9f9; display: block; }
+    .form-group { margin-bottom: 12px; text-align: left; }
+    .form-group label { display: block; font-weight: bold; margin-bottom: 4px; font-size: 13px; color: #34495e; }
+    .form-group input, .form-group select { width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #ccc; }
+
+    /* Dialogue Overlay */
+    #dialogue-box { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 700px; background: rgba(255, 255, 255, 0.95); border: 3px solid #3498db; border-radius: 16px; padding: 16px; z-index: 90; display: none; box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+    #dialogue-name { font-weight: bold; color: #e67e22; font-size: 16px; margin-bottom: 4px; }
+    #dialogue-text { font-size: 14px; color: #2c3e50; min-height: 40px; line-height: 1.4; }
+    #dialogue-options { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .diag-opt { background: #ecf0f1; border: 1px solid #bdc3c7; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; }
+    .diag-opt:hover { background: #3498db; color: white; }
+  </style>
+</head>
+<body>
+
+<div id="game-container">
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- HUD Overlay -->
+  <div class="hud">
+    <div class="hud-box">👤 <span id="hud-name">Player</span> | Lv.<span id="hud-level">1</span></div>
+    <div class="hud-box">💰 Tiền: <span id="hud-money" class="val">1.500.000đ</span></div>
+    <div class="hud-box">🕒 <span id="hud-time">07:00</span> | 🌦️ <span id="hud-weather">Nắng</span></div>
+  </div>
+
+  <div class="hud-right">
+    <button class="btn btn-green" onclick="Game.saveData()">💾 Lưu</button>
+    <button class="btn btn-orange" onclick="Game.openMenu('store')">🏪 Quán</button>
+    <button class="btn" onclick="Game.openMenu('bank')">🏦 Ngân Hàng</button>
+  </div>
+
+  <!-- Mobile Controls -->
+  <div id="joystick-zone"><div id="joystick-stick"></div></div>
+  <div id="action-btn" onclick="Game.triggerAction()">TƯƠNG TÁC</div>
+
+  <!-- Dialogue Box -->
+  <div id="dialogue-box">
+    <div id="dialogue-name">NPC Name</div>
+    <div id="dialogue-text">Nội dung trò chuyện...</div>
+    <div id="dialogue-options"></div>
+  </div>
+
+  <!-- Modal Interface System -->
+  <div id="game-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span id="modal-title">Tiêu Đề</span>
+        <span class="close-btn" onclick="Game.closeModal()">&times;</span>
+      </div>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Character Creation Modal (Tuần tự lúc bắt đầu) -->
+  <div id="creation-modal" class="modal">
+    <div class="modal-content" style="text-align: center;">
+      <h2>🎮 TẠO NHÂN VẬT</h2>
+      <p style="font-size: 12px; color: #7f8c8d; margin-bottom: 15px;">Chào mừng đến với thành phố Buôn Gì Bán!</p>
+      
+      <canvas id="avatar-preview" class="avatar-preview" width="120" height="140"></canvas>
+
+      <div class="form-group">
+        <label>Tên nhân vật:</label>
+        <input type="text" id="create-name" value="Chủ Quán Trẻ">
+      </div>
+      <div class="form-group">
+        <label>Giới tính:</label>
+        <select id="create-gender" onchange="Game.updateAvatarPreview()">
+          <option value="male">Nam</option>
+          <option value="female">Nữ</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Kiểu tóc:</label>
+        <select id="create-hair" onchange="Game.updateAvatarPreview()">
+          <option value="1">Kiểu 1 (Ngắn/Tóc Dài Mềm)</option>
+          <option value="2">Kiểu 2 (Mái Ngố/Tóc Búi)</option>
+          <option value="3">Kiểu 3 (Xoăn/Cột Đuôi Ngựa)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Màu tóc:</label>
+        <input type="color" id="create-hair-color" value="#4a3728" onchange="Game.updateAvatarPreview()">
+      </div>
+      <div class="form-group">
+        <label>Màu áo:</label>
+        <input type="color" id="create-shirt-color" value="#e74c3c" onchange="Game.updateAvatarPreview()">
+      </div>
+      
+      <button class="btn btn-green" style="width: 100%; padding: 12px; font-size: 16px; margin-top: 10px;" onclick="Game.finishCharacterCreation()">BẮT ĐẦU KHỞI NGHIỆP (1.500.000đ)</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/**
+ * ENGINE GAME BUÔN GÌ BÁN - HOÀN CHỈNH
+ * Đồ họa 2D Anime Chibi Procedural Canvas Rendering
+ */
+
+const CONFIG = {
+  MAP_WIDTH: 2400,
+  MAP_HEIGHT: 1800,
+  SIDEWALK_WIDTH: 40,
+  ROAD_WIDTH: 80,
+  GRID_SIZE: 40
+};
+
+// Database 20 Món Ăn
+const FOOD_MENU = [
+  { id: 1, name: "Mì trứng", price: 18000, level: 1, cost: 8000 },
+  { id: 2, name: "Cơm gà", price: 32000, level: 1, cost: 15000 },
+  { id: 3, name: "Bánh mì thịt", price: 22000, level: 1, cost: 10000 },
+  { id: 4, name: "Mì bò", price: 42000, level: 2, cost: 20000 },
+  { id: 5, name: "Cơm sườn", price: 45000, level: 2, cost: 22000 },
+  { id: 6, name: "Gà chiên", price: 38000, level: 3, cost: 18000 },
+  { id: 7, name: "Khoai chiên", price: 20000, level: 3, cost: 8000 },
+  { id: 8, name: "Mì cay", price: 48000, level: 4, cost: 23000 },
+  { id: 9, name: "Cơm bò sốt", price: 55000, level: 4, cost: 26000 },
+  { id: 10, name: "Bún thịt nướng", price: 45000, level: 5, cost: 21000 },
+  { id: 11, name: "Cơm chiên hải sản", price: 65000, level: 5, cost: 32000 },
+  { id: 12, name: "Pizza mini", price: 60000, level: 6, cost: 28000 },
+  { id: 13, name: "Mì hải sản", price: 70000, level: 6, cost: 35000 },
+  { id: 14, name: "Bò lúc lắc", price: 85000, level: 7, cost: 42000 },
+  { id: 15, name: "Gà sốt cay", price: 62000, level: 7, cost: 30000 },
+  { id: 16, name: "Lẩu mini", price: 110000, level: 8, cost: 55000 },
+  { id: 17, name: "Steak sốt tiêu", price: 150000, level: 8, cost: 75000 },
+  { id: 18, name: "Sushi set", price: 135000, level: 9, cost: 65000 },
+  { id: 19, name: "Combo nhà hàng", price: 180000, level: 9, cost: 90000 },
+  { id: 20, name: "Đại tiệc đặc biệt", price: 250000, level: 10, cost: 120000 }
+];
+
+// Database 19 Đồ Uống
+const DRINK_MENU = [
+  { id: 1, name: "Nước suối", price: 5000, level: 1 },
+  { id: 2, name: "Nước ngọt", price: 12000, level: 1 },
+  { id: 3, name: "Trà đá", price: 3000, level: 1 },
+  { id: 4, name: "Cà phê sữa", price: 20000, level: 2 },
+  { id: 5, name: "Trà chanh", price: 15000, level: 2 },
+  { id: 6, name: "Trà đào", price: 25000, level: 3 },
+  { id: 7, name: "Nước cam", price: 25000, level: 3 },
+  { id: 8, name: "Trà sữa", price: 30000, level: 4 },
+  { id: 9, name: "Matcha latte", price: 35000, level: 4 },
+  { id: 10, name: "Cacao đá", price: 28000, level: 5 },
+  { id: 11, name: "Sinh tố dâu", price: 35000, level: 5 },
+  { id: 12, name: "Nước ép dứa", price: 30000, level: 6 },
+  { id: 13, name: "Cold brew", price: 40000, level: 6 },
+  { id: 14, name: "Soda trái cây", price: 32000, level: 7 },
+  { id: 15, name: "Matcha dâu", price: 42000, level: 7 },
+  { id: 16, name: "Đá xay socola", price: 45000, level: 8 },
+  { id: 17, name: "Trà sữa đặc biệt", price: 50000, level: 8 },
+  { id: 18, name: "Nước ép premium", price: 55000, level: 9 },
+  { id: 19, name: "Mocktail hoàng gia", price: 75000, level: 10 }
+];
+
+// Danh sách các vai trò NPC trong thành phố (70+ NPC generation pool)
+const ROLES = [
+  "Chủ sạp rau", "Chủ sạp thịt", "Người bán hải sản", "Chủ tiệm gạo", "Chủ quán nước",
+  "Khách hàng", "Khách VIP", "Nhân viên phục vụ", "Phụ bếp", "Thu ngân",
+  "Shipper", "Tài xế", "Chủ nhà", "Nhân viên ngân hàng", "Nhân viên cho vay",
+  "Công nhân xây dựng", "Nhân viên bất động sản", "Cảnh sát giao thông", "Thợ sửa xe",
+  "Nhân viên vệ sinh", "Hàng xóm", "Chủ nhà hàng đối thủ", "Nhân viên văn phòng",
+  "Nhân viên cửa hàng", "Nhân viên kho", "Người dân thành phố", "Trẻ em", "Người già"
+];
+
+// Lớp nhân vật vẽ bằng Canvas HTML5 (Anime / Chibi 2D - Đầy đủ bộ phận)
+class Character {
+  constructor(options = {}) {
+    this.x = options.x || 300;
+    this.y = options.y || 300;
+    this.name = options.name || "NPC";
+    this.gender = options.gender || (Math.random() > 0.5 ? 'male' : 'female');
+    this.role = options.role || "Người dân";
+    this.hairStyle = options.hairStyle || Math.floor(Math.random() * 3) + 1;
+    this.hairColor = options.hairColor || ["#4a3728", "#1a1a1a", "#d35400", "#f1c40f", "#8e44ad"][Math.floor(Math.random()*5)];
+    this.shirtColor = options.shirtColor || ["#e74c3c", "#3498db", "#2ecc71", "#f39c12", "#9b59b6"][Math.floor(Math.random()*5)];
+    this.skinColor = options.skinColor || ["#ffdbac", "#f1c27d", "#e0ac69"][Math.floor(Math.random()*3)];
+    
+    this.dir = 'down'; // 'up', 'down', 'left', 'right'
+    this.speed = options.speed || 2;
+    this.isMoving = false;
+    this.animFrame = 0;
+    this.animTimer = 0;
+    this.waypoints = options.waypoints || [];
+    this.currentWaypoint = 0;
+    this.money = options.money || 500000;
+    this.relationship = 0; // Point thân thiết
+  }
+
+  update() {
+    // Xử lý di chuyển theo Waypoint
+    if (this.waypoints.length > 0) {
+      let target = this.waypoints[this.currentWaypoint];
+      let dx = target.x - this.x;
+      let dy = target.y - this.y;
+      let dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < 5) {
+        this.currentWaypoint = (this.currentWaypoint + 1) % this.waypoints.length;
+      } else {
+        this.isMoving = true;
+        let vx = (dx / dist) * this.speed;
+        let vy = (dy / dist) * this.speed;
+        this.x += vx;
+        this.y += vy;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+          this.dir = dx > 0 ? 'right' : 'left';
+        } else {
+          this.dir = dy > 0 ? 'down' : 'up';
+        }
+      }
+    }
+
+    if (this.isMoving) {
+      this.animTimer++;
+      if (this.animTimer % 8 === 0) {
+        this.animFrame = (this.animFrame + 1) % 4;
+      }
+    } else {
+      this.animFrame = 0;
+    }
+  }
+
+  // Render Nhân vật Chibi chi tiết đúng yêu cầu đồ họa
+  draw(ctx, isRaining = false) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+
+    // 1. Bóng đổ
+    ctx.beginPath();
+    ctx.ellipse(0, 18, 12, 6, 0, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
+    ctx.fill();
+
+    // Nhịp chân bước
+    let legOffset = Math.sin(this.animFrame * Math.PI / 2) * 4;
+
+    // 2. Giày & Chân
+    ctx.fillStyle = "#2c3e50";
+    ctx.fillRect(-7, 10 + (this.dir==='up'||this.dir==='down'? legOffset : 0), 5, 8); // Chân trái
+    ctx.fillRect(2, 10 + (this.dir==='up'||this.dir==='down'? -legOffset : 0), 5, 8); // Chân phải
+
+    // 3. Thân / Quần áo
+    ctx.fillStyle = this.shirtColor;
+    ctx.beginPath();
+    ctx.roundRect(-10, -6, 20, 18, 4);
+    ctx.fill();
+
+    // 4. Tay
+    ctx.fillStyle = this.skinColor;
+    ctx.beginPath();
+    ctx.arc(-12, 2, 3, 0, Math.PI * 2); // Bàn tay trái
+    ctx.arc(12, 2, 3, 0, Math.PI * 2);  // Bàn tay phải
+    ctx.fill();
+
+    // 5. Cổ
+    ctx.fillStyle = this.skinColor;
+    ctx.fillRect(-3, -10, 6, 5);
+
+    // 6. Đầu (Chibi Tỷ lệ lớn)
+    ctx.beginPath();
+    ctx.arc(0, -20, 16, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 7. Tai
+    ctx.beginPath();
+    ctx.arc(-16, -20, 3, 0, Math.PI * 2);
+    ctx.arc(16, -20, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 8. Khuôn mặt (Mắt, Highlight, Má hồng, Mũi, Miệng) - Chỉ hiện khi nhìn xuống/sang bên
+    if (this.dir !== 'up') {
+      let eyeX = this.dir === 'left' ? -4 : (this.dir === 'right' ? 4 : 0);
+
+      // Má hồng anime
+      ctx.fillStyle = "rgba(255, 105, 180, 0.4)";
+      ctx.beginPath();
+      ctx.arc(-8 + eyeX, -16, 3, 0, Math.PI * 2);
+      ctx.arc(8 + eyeX, -16, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Mắt
+      ctx.fillStyle = "#111";
+      ctx.beginPath();
+      ctx.arc(-6 + eyeX, -21, 3, 0, Math.PI * 2);
+      ctx.arc(6 + eyeX, -21, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Highlight mắt (Long lanh)
+      ctx.fillStyle = "#FFF";
+      ctx.beginPath();
+      ctx.arc(-7 + eyeX, -22, 1, 0, Math.PI * 2);
+      ctx.arc(5 + eyeX, -22, 1, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Miệng cười
+      ctx.strokeStyle = "#c0392b";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(0 + eyeX, -16, 3, 0.1 * Math.PI, 0.9 * Math.PI);
+      ctx.stroke();
+    }
+
+    // 9. Tóc (Tùy biến 3 kiểu)
+    ctx.fillStyle = this.hairColor;
+    ctx.beginPath();
+    if (this.hairStyle === 1) {
+      ctx.arc(0, -23, 17, Math.PI, Math.PI * 2);
+      ctx.fillRect(-17, -23, 34, 6);
+    } else if (this.hairStyle === 2) {
+      ctx.arc(0, -22, 18, 0, Math.PI * 2); // Tóc tròn/ngố
+    } else {
+      ctx.arc(0, -24, 17, Math.PI * 0.8, Math.PI * 2.2); // Tóc cột/xoăn
+      ctx.arc(0, -32, 6, 0, Math.PI * 2); // Đuôi tóc
+    }
+    ctx.fill();
+
+    // 10. Ô che mưa nếu thời tiết mưa
+    if (isRaining) {
+      ctx.fillStyle = "#e74c3c";
+      ctx.beginPath();
+      ctx.arc(0, -38, 26, Math.PI, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#7f8c8d";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, -38);
+      ctx.lineTo(0, -10);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+}
+
+// Lớp Quản Lý Game Chính
+class GameEngine {
+  constructor() {
+    this.canvas = document.getElementById('gameCanvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.player = null;
+    this.npcs = [];
+    this.buildings = [];
+    this.waypoints = [];
+    
+    // Trạng thái thế giới
+    this.scene = 'city'; // 'city', 'restaurant'
+    this.money = 1500000;
+    this.level = 1;
+    this.timeMinutes = 420; // 7:00 AM
+    this.weather = 'Nắng'; // 'Nắng', 'Mưa'
+    this.day = 1;
+    
+    // Thuê mặt bằng & Nhân viên
+    this.rentedStore = false;
+    this.rentDaysLeft = 25;
+    this.staff = { kitchen: false, waiter: false, cashier: false };
+
+    // Khách hàng trong quán ăn
+    this.restaurantCustomers = [];
+    
+    // Joystick
+    this.joyDir = { x: 0, y: 0 };
+    
+    this.initCanvas();
+    this.initWaypointsAndBuildings();
+    this.generateNPCs();
+    this.setupEvents();
+  }
+
+  initCanvas() {
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+  }
+
+  resize() {
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+  }
+
+  // Khởi tạo Map Thành phố đúng layout đồ họa tham chiếu
+  initWaypointsAndBuildings() {
+    // Vỉa hè / Lối đi pedestrian waypoints
+    this.waypoints = [
+      { x: 200, y: 300 }, { x: 800, y: 300 }, { x: 1400, y: 300 }, { x: 2000, y: 300 },
+      { x: 200, y: 800 }, { x: 800, y: 800 }, { x: 1400, y: 800 }, { x: 2000, y: 800 },
+      { x: 200, y: 1300 }, { x: 800, y: 1300 }, { x: 1400, y: 1300 }, { x: 2000, y: 1300 }
+    ];
+
+    // Các Tòa Nhà/Khu Vực Trong Thành Phố
+    this.buildings = [
+      { id: 'home', name: "Khu Nhà Dân", x: 150, y: 100, w: 500, h: 160, color: "#f39c12" },
+      { id: 'apartment', name: "Chung Cư Cao Tầng", x: 750, y: 100, w: 500, h: 160, color: "#3498db" },
+      { id: 'market', name: "Chợ Thực Phẩm", x: 150, y: 600, w: 500, h: 160, color: "#2ecc71" },
+      { id: 'storefront', name: "Mặt Bằng Cho Thuê", x: 750, y: 600, w: 500, h: 160, color: "#e74c3c", rentable: true },
+      { id: 'bank', name: "Ngân Hàng", x: 150, y: 1100, w: 500, h: 160, color: "#9b59b6" },
+      { id: 'warehouse', name: "Kho / Giao Hàng", x: 750, y: 1100, w: 500, h: 160, color: "#34495e" }
+    ];
+  }
+
+  // Sinh ra 70+ NPC sống động
+  generateNPCs() {
+    const names = ["An", "Bình", "Cường", "Dũng", "Giang", "Hương", "Huy", "Khánh", "Lan", "Minh", "Nam", "Phúc", "Quang", "Sơn", "Thảo", "Trang", "Tùng", "Vân", "Yến"];
+    for (let i = 0; i < 75; i++) {
+      let wpIndex = Math.floor(Math.random() * this.waypoints.length);
+      let role = ROLES[i % ROLES.length];
+      let p1 = this.waypoints[wpIndex];
+      let p2 = this.waypoints[(wpIndex + 1) % this.waypoints.length];
+
+      this.npcs.push(new Character({
+        x: p1.x + Math.random() * 40 - 20,
+        y: p1.y + Math.random() * 40 - 20,
+        name: names[i % names.length] + " (" + role + ")",
+        role: role,
+        waypoints: [p1, p2],
+        speed: 1 + Math.random() * 1.2
+      }));
+    }
+  }
+
+  // Khởi tạo Player sau khi tạo nhân vật
+  initPlayer(data) {
+    this.player = new Character({
+      x: 800,
+      y: 820,
+      name: data.name,
+      gender: data.gender,
+      hairStyle: parseInt(data.hair),
+      hairColor: data.hairColor,
+      shirtColor: data.shirtColor,
+      speed: 3.5
+    });
+    document.getElementById('hud-name').innerText = this.player.name;
+    document.getElementById('creation-modal').style.display = 'none';
+    this.startLoop();
+  }
+
+  // Cập nhật Xem Trước Avatar
+  updateAvatarPreview() {
+    let canvas = document.getElementById('avatar-preview');
+    let ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    let dummy = new Character({
+      x: 60,
+      y: 90,
+      gender: document.getElementById('create-gender').value,
+      hairStyle: parseInt(document.getElementById('create-hair').value),
+      hairColor: document.getElementById('create-hair-color').value,
+      shirtColor: document.getElementById('create-shirt-color').value
+    });
+    dummy.draw(ctx);
+  }
+
+  finishCharacterCreation() {
+    let name = document.getElementById('create-name').value || "Người Chơi";
+    let gender = document.getElementById('create-gender').value;
+    let hair = document.getElementById('create-hair').value;
+    let hairColor = document.getElementById('create-hair-color').value;
+    let shirtColor = document.getElementById('create-shirt-color').value;
+
+    this.initPlayer({ name, gender, hair, hairColor, shirtColor });
+  }
+
+  // Vòng Lặp Game (Main Loop)
+  startLoop() {
+    const loop = () => {
+      this.update();
+      this.render();
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  }
+
+  update() {
+    // 1. Cập nhật thời gian thực trong game
+    this.timeMinutes += 0.1;
+    if (this.timeMinutes >= 1440) {
+      this.timeMinutes = 0;
+      this.day++;
+      this.rentDaysLeft--;
+    }
+    let hrs = Math.floor(this.timeMinutes / 60);
+    let mins = Math.floor(this.timeMinutes % 60);
+    document.getElementById('hud-time').innerText = `${hrs < 10 ? '0':''}${hrs}:${mins < 10 ? '0':''}${mins}`;
+    document.getElementById('hud-money').innerText = this.money.toLocaleString('vi-VN') + "đ";
+    document.getElementById('hud-level').innerText = this.level;
+
+    // Ngẫu nhiên đổi thời tiết
+    if (Math.random() < 0.0001) {
+      this.weather = this.weather === 'Nắng' ? 'Mưa' : 'Nắng';
+      document.getElementById('hud-weather').innerText = this.weather;
+    }
+
+    if (this.scene === 'city') {
+      // 2. Di chuyển Player bằng Phím / Joystick
+      this.player.isMoving = false;
+      let vx = 0, vy = 0;
+
+      if (this.keys['KeyW'] || this.keys['ArrowUp']) vy -= 1;
+      if (this.keys['KeyS'] || this.keys['ArrowDown']) vy += 1;
+      if (this.keys['KeyA'] || this.keys['ArrowLeft']) vx -= 1;
+      if (this.keys['KeyD'] || this.keys['ArrowRight']) vx += 1;
+
+      if (this.joyDir.x !== 0 || this.joyDir.y !== 0) {
+        vx = this.joyDir.x;
+        vy = this.joyDir.y;
+      }
+
+      if (vx !== 0 || vy !== 0) {
+        this.player.isMoving = true;
+        let len = Math.sqrt(vx * vx + vy * vy);
+        this.player.x += (vx / len) * this.player.speed;
+        this.player.y += (vy / len) * this.player.speed;
+
+        if (Math.abs(vx) > Math.abs(vy)) {
+          this.player.dir = vx > 0 ? 'right' : 'left';
+        } else {
+          this.player.dir = vy > 0 ? 'down' : 'up';
+        }
+      }
+
+      this.player.update();
+
+      // 3. Cập nhật NPC & va chạm giãn cách (Crowd Separation)
+      this.npcs.forEach(npc => {
+        npc.update();
+        // Giữ khoảng cách tối thiểu giữa các NPC
+        this.npcs.forEach(other => {
+          if (npc !== other) {
+            let dx = npc.x - other.x;
+            let dy = npc.y - other.y;
+            let dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 20 && dist > 0) {
+              npc.x += (dx / dist) * 0.5;
+              npc.y += (dy / dist) * 0.5;
+            }
+          }
+        });
+      });
+
+      // Check Nút Tương tác gần công trình hoặc NPC
+      this.checkInteractions();
+    } else if (this.scene === 'restaurant') {
+      // Logic Bên trong quán ăn
+      this.updateRestaurantLogic();
+    }
+  }
+
+  checkInteractions() {
+    let actionBtn = document.getElementById('action-btn');
+    let nearBuilding = this.buildings.find(b => {
+      let dx = this.player.x - (b.x + b.w / 2);
+      let dy = this.player.y - (b.y + b.h + 20);
+      return Math.sqrt(dx * dx + dy * dy) < 80;
+    });
+
+    let nearNPC = this.npcs.find(n => {
+      let dx = this.player.x - n.x;
+      let dy = this.player.y - n.y;
+      return Math.sqrt(dx * dx + dy * dy) < 45;
+    });
+
+    if (nearBuilding) {
+      actionBtn.style.display = 'flex';
+      actionBtn.innerText = nearBuilding.id === 'storefront' && this.rentedStore ? "VÀO QUÁN" : "TƯƠNG TÁC";
+      this.activeTarget = { type: 'building', data: nearBuilding };
+    } else if (nearNPC) {
+      actionBtn.style.display = 'flex';
+      actionBtn.innerText = "NÓI CHUYỆN";
+      this.activeTarget = { type: 'npc', data: nearNPC };
+    } else {
+      actionBtn.style.display = 'none';
+      this.activeTarget = null;
+    }
+  }
+
+  triggerAction() {
+    if (!this.activeTarget) return;
+
+    if (this.activeTarget.type === 'building') {
+      let b = this.activeTarget.data;
+      if (b.id === 'storefront') {
+        if (!this.rentedStore) {
+          this.openModal("Thuê Mặt Bằng", `
+            <p>Mặt bằng kinh doanh tầng trệt vị trí đắc địa!</p>
+            <p><b>Giá thuê:</b> 500.000đ / 25 ngày</p>
+            <button class="btn btn-green" style="margin-top:15px; width:100%" onclick="Game.rentStore()">KÝ HỢP ĐỒNG THUÊ</button>
+          `);
+        } else {
+          this.enterRestaurant();
+        }
+      } else if (b.id === 'market') {
+        this.openMarket();
+      } else if (b.id === 'bank') {
+        this.openBank();
+      }
+    } else if (this.activeTarget.type === 'npc') {
+      let npc = this.activeTarget.data;
+      // NPC quay mặt về phía người chơi
+      npc.dir = this.player.x > npc.x ? 'right' : 'left';
+      this.openDialogue(npc);
+    }
+  }
+
+  rentStore() {
+    if (this.money >= 500000) {
+      this.money -= 500000;
+      this.rentedStore = true;
+      this.closeModal();
+      alert("Chúc mừng! Bạn đã thuê thành công mặt bằng kinh doanh!");
+    } else {
+      alert("Bạn không đủ tiền trả chi phí thuê!");
+    }
+  }
+
+  enterRestaurant() {
+    this.scene = 'restaurant';
+    document.getElementById('action-btn').style.display = 'none';
+    
+    // Sinh khách ngẫu nhiên nếu chưa có
+    if (this.restaurantCustomers.length === 0) {
+      for (let i = 0; i < 3; i++) {
+        this.restaurantCustomers.push({
+          x: 200 + i * 120,
+          y: 250,
+          state: 'waiting', // 'waiting', 'ordered', 'eating'
+          food: FOOD_MENU[Math.floor(Math.random() * 3)]
+        });
+      }
+    }
+  }
+
+  exitRestaurant() {
+    this.scene = 'city';
+  }
+
+  updateRestaurantLogic() {
+    // Tự động phục vụ nếu có nhân viên (Level 5)
+    if (this.staff.waiter && this.staff.kitchen) {
+      this.restaurantCustomers.forEach(c => {
+        if (c.state === 'waiting') {
+          c.state = 'eating';
+          setTimeout(() => {
+            this.money += c.food.price;
+            c.state = 'done';
+          }, 3000);
+        }
+      });
+      this.restaurantCustomers = this.restaurantCustomers.filter(c => c.state !== 'done');
+    }
+  }
+
+  // RENDER GAME CANVAS
+  render() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    if (this.scene === 'city') {
+      this.renderCityMap();
+    } else {
+      this.renderRestaurantInside();
+    }
+  }
+
+  // Render Cảnh Quan Thành Phố Sống Động
+  renderCityMap() {
+    let ctx = this.ctx;
+    
+    // Camera bám theo Player
+    ctx.save();
+    let camX = -this.player.x + this.canvas.width / 2;
+    let camY = -this.player.y + this.canvas.height / 2;
+    ctx.translate(camX, camY);
+
+    // 1. Nền Cỏ & Đất
+    ctx.fillStyle = "#a8e6cf";
+    ctx.fillRect(0, 0, CONFIG.MAP_WIDTH, CONFIG.MAP_HEIGHT);
+
+    // 2. Hệ Thống Đường Xá & Vỉa Hè (Pedestrian Lanes)
+    ctx.fillStyle = "#bdc3c7"; // Vỉa hè
+    ctx.fillRect(100, 250, 2000, 1000);
+    ctx.fillStyle = "#7f8c8d"; // Đường xe
+    ctx.fillRect(100, 320, 2000, 160);
+    ctx.fillRect(100, 820, 2000, 160);
+
+    // 3. Render Các Công Trình (Buildings & Tầng trệt)
+    this.buildings.forEach(b => {
+      // Mặt bằng tòa nhà
+      ctx.fillStyle = b.color;
+      ctx.beginPath();
+      ctx.roundRect(b.x, b.y, b.w, b.h, 12);
+      ctx.fill();
+      ctx.strokeStyle = "#2c3e50";
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      // Biển hiệu
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(b.x + 20, b.y + 10, b.w - 40, 30);
+      ctx.fillStyle = "#2c3e50";
+      ctx.font = "bold 16px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText(b.name, b.x + b.w / 2, b.y + 32);
+
+      // Cửa ra vào / Mặt bằng trệt
+      ctx.fillStyle = "#34495e";
+      ctx.fillRect(b.x + b.w / 2 - 25, b.y + b.h - 40, 50, 40);
+    });
+
+    // 4. Render NPC & Player theo Y-sorting (Hiệu ứng độ sâu Z-index)
+    let entities = [...this.npcs, this.player];
+    entities.sort((a, b) => a.y - b.y);
+    entities.forEach(e => e.draw(ctx, this.weather === 'Mưa'));
+
+    // 5. Hiệu ứng Thời Tiết / Ban Đêm
+    let hrs = Math.floor(this.timeMinutes / 60);
+    if (hrs >= 18 || hrs < 6) {
+      ctx.fillStyle = "rgba(15, 26, 44, 0.45)"; // Ánh sáng ban đêm
+      ctx.fillRect(0, 0, CONFIG.MAP_WIDTH, CONFIG.MAP_HEIGHT);
+    }
+
+    if (this.weather === 'Mưa') {
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 150; i++) {
+        let rx = Math.random() * CONFIG.MAP_WIDTH;
+        let ry = Math.random() * CONFIG.MAP_HEIGHT;
+        ctx.beginPath();
+        ctx.moveTo(rx, ry);
+        ctx.lineTo(rx - 5, ry + 15);
+        ctx.stroke();
+      }
+    }
+
+    ctx.restore();
+  }
+
+  // Render Scene Bên Trong Quán Ăn
+  renderRestaurantInside() {
+    let ctx = this.ctx;
+    ctx.fillStyle = "#f5e6ca"; // Sàn gỗ ấm cúng
+    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // Tường quán & Bếp
+    ctx.fillStyle = "#d5b895";
+    ctx.fillRect(0, 0, this.canvas.width, 120);
+    ctx.fillStyle = "#e74c3c";
+    ctx.font = "bold 22px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("🍜 KHU BẾP & PHỤC VỤ", THIS.canvas.width / 2, 60);
+
+    // Bàn ghế & Khách ngồi ăn
+    this.restaurantCustomers.forEach((c, index) => {
+      // Bàn
+      ctx.fillStyle = "#8d5b4c";
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, 35, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Món ăn trên bàn
+      ctx.fillStyle = "#f1c40f";
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, 12, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Khách
+      ctx.fillStyle = "#3498db";
+      ctx.beginPath();
+      ctx.arc(c.x, c.y + 45, 16, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Trạng thái Order
+      ctx.fillStyle = "#2c3e50";
+      ctx.font = "12px Arial";
+      ctx.fillText(c.state === 'waiting' ? `Chờ món: ${c.food.name}` : "Đang ăn...", c.x, c.y - 45);
+    });
+
+    // Nút Thoát Quán
+    ctx.fillStyle = "#e74c3c";
+    ctx.fillRect(30, 30, 120, 40);
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 14px Arial";
+    ctx.fillText("RA THÀNH PHỐ", 90, 55);
+  }
+
+  // Hệ Thống UI Dialogue & Menu
+  openDialogue(npc) {
+    let box = document.getElementById('dialogue-box');
+    document.getElementById('dialogue-name').innerText = npc.name;
+    document.getElementById('dialogue-text').innerText = `Xin chào! Tôi là ${npc.role}. Hôm nay tiết trời ${this.weather} thích hợp để làm ăn đấy!`;
+    
+    let opts = document.getElementById('dialogue-options');
+    opts.innerHTML = `
+      <div class="diag-opt" onclick="Game.talkNPC('${npc.name}')">💬 Trò chuyện (+Thân thiết)</div>
+      <div class="diag-opt" onclick="Game.closeDialogue()">Tạm biệt</div>
+    `;
+    box.style.display = 'block';
+  }
+
+  talkNPC(name) {
+    document.getElementById('dialogue-text').innerText = `Cảm ơn cậu đã trò chuyện! Chúc quán của cậu luôn đông khách nhé.`;
+  }
+
+  closeDialogue() {
+    document.getElementById('dialogue-box').style.display = 'none';
+  }
+
+  openMarket() {
+    let itemsHTML = FOOD_MENU.map(f => `
+      <div class="card-item">
+        <b>${f.name}</b>
+        <p style="font-size:12px; color:#7f8c8d">Giá vốn: ${f.cost.toLocaleString()}đ</p>
+        <button class="btn btn-green" style="margin-top:6px; padding:4px 8px;" onclick="Game.buyIngredient(${f.cost})">Nhập Hàng</button>
+      </div>
+    `).join('');
+    this.openModal("🛒 CHỢ NGUYÊN LIỆU", `<div class="grid-list">${itemsHTML}</div>`);
+  }
+
+  buyIngredient(cost) {
+    if (this.money >= cost) {
+      this.money -= cost;
+      alert("Đã nhập thành công 1 suất nguyên liệu!");
+    } else {
+      alert("Không đủ tiền!");
+    }
+  }
+
+  openBank() {
+    this.openModal("🏦 NGÂN HÀNG THÀNH PHỐ", `
+      <p><b>Tài khoản:</b> ${this.money.toLocaleString()}đ</p>
+      <hr style="margin:10px 0;">
+      <p>Gói vay khởi nghiệp (Lãi suất 5%/ngày):</p>
+      <button class="btn btn-green" style="width:100%; margin-top:8px;" onclick="Game.borrowMoney(2000000)">Vay 2.000.000đ</button>
+    `);
+  }
+
+  borrowMoney(amount) {
+    this.money += amount;
+    alert(`Đã giải ngân ${amount.toLocaleString()}đ vào tài khoản!`);
+    this.closeModal();
+  }
+
+  openMenu(type) {
+    if (type === 'store') {
+      let staffHTML = this.level >= 5 ? `
+        <p><b>Thuê Nhân Viên (Level 5+):</b></p>
+        <button class="btn btn-orange" onclick="Game.hireStaff('kitchen')">Phụ Bếp (200k/ngày)</button>
+        <button class="btn btn-orange" onclick="Game.hireStaff('waiter')">Phục Vụ (150k/ngày)</button>
+      ` : `<p style="color:#e74c3c;">Vui lòng đạt Level 5 để mở khóa hệ thống thuê nhân viên tự động!</p>`;
+
+      this.openModal("🏪 QUẢN LÝ QUÁN", `
+        <p>Trạng thái: ${this.rentedStore ? "Đã thuê mặt bằng" : "Chưa có mặt bằng"}</p>
+        <p>Hạn thuê còn lại: ${this.rentDaysLeft} ngày</p>
+        <hr style="margin:10px 0;">
+        ${staffHTML}
+      `);
+    }
+  }
+
+  hireStaff(role) {
+    this.staff[role] = true;
+    alert("Thuê nhân viên thành công!");
+    this.closeModal();
+  }
+
+  openModal(title, content) {
+    document.getElementById('modal-title').innerText = title;
+    document.getElementById('modal-body').innerHTML = content;
+    document.getElementById('game-modal').style.display = 'flex';
+  }
+
+  closeModal() {
+    document.getElementById('game-modal').style.display = 'none';
+  }
+
+  // Lưu Dữ Liệu Game (Lưu kết hợp LocalStorage + API Server nếu có)
+  saveData() {
+    let saveData = {
+      player: this.player,
+      money: this.money,
+      level: this.level,
+      timeMinutes: this.timeMinutes,
+      rentedStore: this.rentedStore,
+      rentDaysLeft: this.rentDaysLeft,
+      staff: this.staff
+    };
+
+    localStorage.setItem('BUON_GI_BAN_SAVE', JSON.stringify(saveData));
+
+    // Gửi lên Server Node.js nếu đang chạy server.js
+    fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(saveData)
+    }).catch(() => {});
+
+    alert("Đã lưu tiến trình game thành công!");
+  }
+
+  // Setup Sự Kiện Điều Khiển (PC WASD / Arrow & Touch Mobile)
+  setupEvents() {
+    this.keys = {};
+    window.addEventListener('keydown', e => this.keys[e.code] = true);
+    window.addEventListener('keyup', e => this.keys[e.code] = false);
+
+    // Cấu hình Joystick di chuyển cho thiết bị Mobile
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+      let joyZone = document.getElementById('joystick-zone');
+      let joyStick = document.getElementById('joystick-stick');
+      joyZone.style.display = 'block';
+
+      let activeTouchId = null;
+      let startX = 0, startY = 0;
+
+      joyZone.addEventListener('touchstart', e => {
+        let touch = e.changedTouches[0];
+        activeTouchId = touch.identifier;
+        let rect = joyZone.getBoundingClientRect();
+        startX = rect.left + rect.width / 2;
+        startY = rect.top + rect.height / 2;
+      });
+
+      joyZone.addEventListener('touchmove', e => {
+        for (let touch of e.changedTouches) {
+          if (touch.identifier === activeTouchId) {
+            let dx = touch.clientX - startX;
+            let dy = touch.clientY - startY;
+            let dist = Math.min(Math.sqrt(dx * dx + dy * dy), 35);
+            let angle = Math.atan2(dy, dx);
+
+            let mx = Math.cos(angle) * dist;
+            let my = Math.sin(angle) * dist;
+
+            joyStick.style.transform = `translate(${mx}px, ${my}px)`;
+            this.joyDir = { x: mx / 35, y: my / 35 };
+          }
+        }
+      });
+
+      const resetJoy = () => {
+        joyStick.style.transform = `translate(0px, 0px)`;
+        this.joyDir = { x: 0, y: 0 };
+        activeTouchId = null;
+      };
+
+      joyZone.addEventListener('touchend', resetJoy);
+      joyZone.addEventListener('touchcancel', resetJoy);
+    }
+
+    // Sự kiện click trong canvas Quán ăn
+    this.canvas.addEventListener('click', e => {
+      if (this.scene === 'restaurant' && e.clientX < 150 && e.clientY < 80) {
+        this.exitRestaurant();
+      }
+    });
+  }
+}
+
+// Khởi chạy Game khi trang load xong
+let Game;
+window.addEventListener('load', () => {
+  Game = new GameEngine();
+  Game.updateAvatarPreview();
+});
+</script>
+</body>
+</html>
