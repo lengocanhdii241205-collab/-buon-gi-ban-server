@@ -1,0 +1,1046 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>BUÔN GÌ BÁN — Pastel Town</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;background:#b8d9e8;color:#795740}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+button{font-weight:bold;cursor:pointer;touch-action:manipulation;color:#795740}
+
+/* HUD */
+#hud{position:fixed;top:7px;left:7px;right:7px;display:flex;gap:5px;flex-wrap:wrap;pointer-events:none;z-index:2}
+.pill,.quick,.businessBtn{padding:7px 9px;background:#fff9e9;border:2px solid #edc99a;border-radius:11px;box-shadow:0 3px #d8ae82;font-size:11px}
+#stats{position:fixed;top:50px;left:7px;display:flex;gap:4px;flex-wrap:wrap;max-width:calc(100% - 150px);pointer-events:none;z-index:2}
+.stat{padding:5px 7px;background:#fff9e9ed;border:1px solid #edc99a;border-radius:8px;font-size:10px}
+
+/* Nút chức năng bên phải */
+#menuBtn{
+ position:fixed;top:88px;right:8px;z-index:6;
+ max-width:140px;padding:8px;
+}
+#quick{
+ position:fixed;top:130px;right:8px;
+ display:flex;flex-direction:column;align-items:stretch;
+ gap:6px;width:138px;
+ max-height:calc(100dvh - 265px);
+ overflow-y:auto;overscroll-behavior:contain;
+ padding:2px 4px 6px;z-index:6;
+}
+#quick button{
+ display:block;width:100%;min-width:0;min-height:36px;
+ padding:8px 5px;font-size:11px;line-height:1.25;
+ white-space:normal;overflow-wrap:anywhere;
+}
+#businessButtons{
+ position:fixed;top:310px;right:8px;
+ display:flex;flex-direction:column;align-items:stretch;
+ gap:7px;width:138px;z-index:6;
+}
+.businessBtn{
+ display:block;width:100%;min-width:0;min-height:39px;
+ padding:8px 5px;background:#fff0d3;
+ font-size:11px;line-height:1.25;
+ white-space:normal;overflow-wrap:anywhere;
+}
+
+/* Điều khiển di chuyển */
+#pad{
+ position:fixed;bottom:12px;left:10px;
+ width:112px;height:112px;
+ display:grid;grid-template:repeat(3,minmax(0,1fr))/repeat(3,minmax(0,1fr));
+ gap:4px;z-index:5;
+}
+.move{border:2px solid #edc99a;border-radius:12px;background:#fff9e9;font-size:20px;box-shadow:0 3px #d8ae82;min-width:0;min-height:0;padding:0}
+.up{grid-area:1/2}.left{grid-area:2/1}.right{grid-area:2/3}.down{grid-area:3/2}
+#act{
+ position:fixed;right:12px;bottom:18px;
+ width:76px;height:76px;border:3px solid #edc99a;
+ border-radius:50%;background:#f5c879;
+ box-shadow:0 4px #d8ae82;z-index:7;font-size:11px;
+}
+
+/* Bản đồ và lời nhắc */
+#hint{
+ position:fixed;bottom:132px;left:50%;
+ transform:translateX(-50%);
+ width:max-content;max-width:48%;
+ background:#fff9e9;border:2px solid #edc99a;
+ border-radius:11px;padding:7px;font-size:10px;
+ text-align:center;pointer-events:none;z-index:2;
+}
+#map{
+ position:fixed;right:98px;bottom:12px;
+ width:68px;height:54px;border:2px solid #fff9e9;
+ border-radius:7px;background:#b4e49b;
+ pointer-events:none;z-index:3;
+}
+
+/* Cửa sổ game */
+#modal{
+ display:none;position:fixed;inset:0;background:#4b423b88;
+ z-index:10;align-items:center;justify-content:center;padding:12px;
+}
+#panel{
+ width:min(540px,100%);max-height:83dvh;overflow:auto;
+ background:#fff9e9;border:3px solid #edc99a;
+ border-radius:18px;padding:14px;box-shadow:0 8px #896653;
+}
+#panel h2{margin:0 0 8px;font-size:19px}
+#panel p{font-size:13px;line-height:1.5}
+.actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}
+.action{border:2px solid #edc99a;background:#fff0d3;border-radius:10px;padding:10px 6px;line-height:1.3;overflow-wrap:anywhere}
+.action:disabled{opacity:.45}
+.close{width:100%;margin-top:10px;border:0;background:#d96855;color:white;border-radius:10px;padding:11px}
+#toast{
+ position:fixed;top:100px;left:50%;transform:translateX(-50%);
+ background:#fff9e9;border:2px solid #edc99a;border-radius:11px;
+ padding:9px;display:none;z-index:20;font-weight:bold;
+ font-size:12px;text-align:center;max-width:90%;
+}
+
+/* Điện thoại */
+@media(max-width:430px){
+ #hud{top:5px;left:4px;right:4px;gap:4px}
+ .pill{font-size:9px;padding:5px}
+ #stats{top:44px;left:5px;max-width:calc(100% - 140px);gap:3px}
+ .stat{font-size:9px;padding:4px 5px}
+
+ #menuBtn{top:84px;right:5px;padding:7px;font-size:10px}
+ #quick{
+  top:124px;right:4px;width:126px;
+  max-height:calc(100dvh - 260px);gap:5px;
+ }
+ #quick button{min-height:33px;padding:7px 4px;font-size:10px}
+ #businessButtons{top:290px;right:4px;width:126px;gap:6px}
+ .businessBtn{min-height:36px;padding:7px 4px;font-size:10px}
+
+ #pad{left:6px;bottom:9px;width:104px;height:104px}
+ .move{font-size:18px}
+ #act{right:7px;bottom:14px;width:70px;height:70px;font-size:10px}
+ #map{right:84px;bottom:10px;width:62px;height:49px}
+ #hint{bottom:122px;max-width:46%;font-size:9px;padding:6px}
+ #toast{top:100px;max-width:78%}
+}
+
+/* Điện thoại màn hình thấp */
+@media(max-height:600px){
+ #quick{max-height:135px;overflow-y:auto}
+ #businessButtons{top:auto;bottom:150px}
+ #hint{bottom:108px}
+ #pad{width:92px;height:92px}
+ #act{width:62px;height:62px}
+}
+
+/* Màn hình rất nhỏ: ưu tiên không chồng nút */
+@media(max-width:360px){
+ #quick,#businessButtons{width:112px;right:3px}
+ #quick button,.businessBtn{font-size:9px;padding:6px 3px}
+ #menuBtn{right:3px;font-size:9px}
+ #stats{max-width:calc(100% - 122px)}
+ #map{right:76px;width:54px;height:44px}
+ #act{right:5px;width:60px;height:60px}
+ #pad{left:5px;width:88px;height:88px}
+ #hint{max-width:43%;font-size:8px}
+}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="hud">
+ <div class="pill">🏡 BUÔN GÌ BÁN</div>
+ <div class="pill">💰 <span id="money">1.500.000</span>đ</div>
+ <div class="pill">⭐ LV <span id="level">1</span></div>
+</div>
+
+<div id="stats">
+ <div class="stat">📅 Ngày <span id="day">1</span></div>
+ <div class="stat">🍜 Kho <span id="stock">0</span></div>
+ <div class="stat">❤️ Uy tín <span id="rep">0</span></div>
+ <div class="stat">🪑 Bàn <span id="tableCount">5</span></div>
+ <div class="stat">🕒 <span id="clock">08:00</span></div>
+</div>
+
+<button id="menuBtn" class="quick">📋 Trạng thái</button>
+
+<div id="quick">
+ <button class="quick" id="marketBtn">🛍️ Cửa hàng</button>
+ <button class="quick" id="staffBtn">👩‍💼 Nhân viên</button>
+ <button class="quick" id="findBtn">📍 Về quán của tôi</button>
+ <button class="quick" id="musicBtn">🎵 Nhạc chill: Tắt</button>
+</div>
+
+<div id="businessButtons">
+ <button class="businessBtn" id="rentBtn">🏪 Thuê mặt bằng</button>
+ <button class="businessBtn" id="sellBtn">🍱 Bán đồ ăn</button>
+</div>
+
+<div id="hint">🌷 Di chuyển đến gần công trình rồi bấm TƯƠNG TÁC</div>
+<div id="toast"></div>
+
+<div id="pad">
+ <button class="move up" data-k="up">▲</button>
+ <button class="move left" data-k="left">◀</button>
+ <button class="move right" data-k="right">▶</button>
+ <button class="move down" data-k="down">▼</button>
+</div>
+
+<button id="act">TƯƠNG<br>TÁC</button>
+<canvas id="map" width="300" height="240"></canvas>
+
+<div id="modal">
+ <div id="panel">
+  <h2 id="panelTitle">BUÔN GÌ BÁN</h2>
+  <div id="panelBody"></div>
+  <div class="actions" id="actions"></div>
+  <button class="close" id="close">ĐÓNG</button>
+ </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const canvas=$('game'),ctx=canvas.getContext('2d');
+const map=$('map'),mctx=map.getContext('2d');
+const WORLD={w:3000,h:2400};
+const roadsX=[500,1250,2000,2750],roadsY=[450,1050,1650,2250];
+let cw=innerWidth,ch=innerHeight,dpr=1,zoom=1,camX=0,camY=0;
+let last=0,gameTime=0,clockMinutes=480,dayTimer=0,toastTimer=0;
+let modalOpen=false,insideShop=false,musicOn=false,audioCtx=null,musicTimer=null,musicStep=0;
+const keys={};
+
+const state={
+ money:1500000,day:1,level:1,xp:0,rep:0,
+ restaurantRented:false,restaurantOpen:false,
+ shopX:690,shopY:625,shopTables:5,decor:0,
+ staff:0,mealsSold:0,drinksSold:0,reviews:0,rating:5,
+ inventory:{rice:5,meat:3,vegetables:5,noodles:3,coffee:2,milk:2,sugar:3,water:2,petfood:2},
+ cooked:{},drinks:{},saveVersion:4,expanded:false
+};
+
+function save(){
+ try{localStorage.setItem('buonGiBanSave',JSON.stringify(state))}catch(e){}
+}
+function load(){
+ try{
+  const d=JSON.parse(localStorage.getItem('buonGiBanSave')||'null');
+  if(d&&d.saveVersion>=2)Object.assign(state,d);
+ }catch(e){}
+ if(!Number.isFinite(state.shopTables)||state.shopTables<0)state.shopTables=5;
+ if(state.level>=5&&!state.expanded){
+  state.shopTables+=10;state.expanded=true;
+ }
+}
+load();
+
+const player={x:680,y:560,skin:'#ffd4b5',hair:'#54332b',shirt:'#e9786e',pants:'#303344',speed:210};
+const buildings=[],npcs=[],cars=[],pets=[],customers=[];
+const parks=[
+ {x:50,y:35,w:370,h:290,name:'🌳 CÔNG VIÊN HOA'},
+ {x:2180,y:35,w:570,h:290,name:'🌷 VƯỜN HOA'},
+ {x:65,y:1250,w:420,h:280,name:'🏞️ CÔNG VIÊN BỜ HỒ'},
+ {x:2200,y:1250,w:520,h:280,name:'🌴 CÔNG VIÊN'},
+ {x:1050,y:55,w:900,h:280,name:'⛲ QUẢNG TRƯỜNG'}
+];
+
+function addBuilding(x,y,w,h,type,name,color,roof){
+ buildings.push({x,y,w,h,type,name,color,roof});
+}
+
+function generateBuildings(){
+ const blocks=[
+ [55,235,370,['house','house','house']],
+ [565,235,620,['apt','apt','house','house']],
+ [1320,235,620,['house','house','house','house']],
+ [2070,235,620,['apt','house','house','house']],
+ [55,625,370,['house','house','house']],
+ [565,625,620,['restaurant','shop','supermarket','cafe']],
+ [1320,625,620,['market','restaurant','shop','supermarket']],
+ [2070,625,620,['supermarket','shop','restaurant','cafe']],
+ [55,1225,370,['house','house','house']],
+ [565,1225,620,['apt','house','house','house']],
+ [1320,1225,620,['restaurant','supermarket','shop','cafe']],
+ [2070,1225,620,['house','house','house','house']],
+ [55,1825,370,['house','house','house']],
+ [565,1825,620,['restaurant','shop','supermarket','cafe']],
+ [1320,1825,620,['apt','house','house','house']],
+ [2070,1825,620,['restaurant','supermarket','shop','market']]
+ ];
+ const colors=['#fff5df','#f7d7bf','#cce5d4','#f3d3b6','#d9d6f3','#f6d9e6','#e8e6b8'];
+ const roofs=['#e58d89','#76b7a0','#efa76b','#8a9ee2','#d96855','#d88c66'];
+ const labels={
+  house:['NHÀ DÂN','NHÀ NHỎ','GIA ĐÌNH'],
+  apt:['CHUNG CƯ','CĂN HỘ'],
+  shop:['TẠP HÓA','CỬA HÀNG'],
+  restaurant:['QUÁN ĂN','CƠM NGON','MÌ GÀ'],
+  supermarket:['SIÊU THỊ MINI','SIÊU THỊ'],
+  market:['CHỢ','THỰC PHẨM'],
+  cafe:['QUÁN CÀ PHÊ','TIỆM BÁNH']
+ };
+ for(const [bx,by,bw,types] of blocks){
+  const gap=10,n=types.length,cell=(bw-gap*(n-1))/n;
+  types.forEach((type,i)=>{
+   const w=type==='apt'?105:Math.min(130,cell-5);
+   const h=type==='apt'?145:110;
+   const x=bx+i*(cell+gap)+(cell-w)/2;
+   const y=by+(type==='apt'?-25:0);
+   const list=labels[type]||labels.house;
+   addBuilding(x,y,w,h,type,list[i%list.length],
+    colors[(buildings.length*3+i)%colors.length],
+    roofs[(buildings.length+i)%roofs.length]);
+  });
+ }
+ addBuilding(1430,845,125,105,'pharmacy','NHÀ THUỐC','#d9f1e4','#4dba91');
+ addBuilding(1580,845,125,105,'furniture','NỘI THẤT','#f6dfbd','#d88c66');
+}
+generateBuildings();
+
+let seed=82741;
+function rand(){
+ seed=(seed*1664525+1013904223)>>>0;
+ return seed/4294967296;
+}
+const npcShirts=['#f28cab','#258bd4','#3474a8','#bb83c9','#31313f','#70b7a1','#f2b75f','#e9786e','#8a9ee2','#c17b58'];
+
+for(let i=0;i<76;i++){
+ const y=roadsY[i%roadsY.length]+(i%3===0?-125:125);
+ npcs.push({
+  x:80+rand()*(WORLD.w-160),y,phase:rand()*6,
+  skin:['#ffd4b5','#f4c6a1','#eac09b'][i%3],
+  hair:'#54332b',shirt:npcShirts[i%npcShirts.length],
+  pants:'#303344',bag:i%5===0,
+  gender:i%2?'girl':'boy',speed:20+rand()*25
+ });
+}
+for(let i=0;i<18;i++){
+ cars.push({
+  x:rand()*WORLD.w,y:roadsY[i%4]+(i%2?37:-37),
+  speed:70+rand()*65,dir:i%2?1:-1,
+  color:['#e63946','#457b9d','#ffb703','#6a4c93','#2a9d8f'][i%5]
+ });
+}
+for(let i=0;i<16;i++){
+ pets.push({
+  x:120+rand()*(WORLD.w-240),y:120+rand()*(WORLD.h-240),
+  type:i%2?'🐈':'🐕',phase:rand()*8
+ });
+}
+
+function resize(){
+ dpr=Math.min(devicePixelRatio||1,2);
+ cw=innerWidth;ch=innerHeight;
+ canvas.width=cw*dpr;canvas.height=ch*dpr;
+ zoom=Math.min(cw/780,ch/550);
+}
+addEventListener('resize',resize);
+resize();
+
+function rect(x,y,w,h,c){
+ ctx.fillStyle=c;ctx.fillRect(x,y,w,h);
+}
+function ellipse(x,y,rx,ry,c){
+ ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);
+ ctx.fillStyle=c;ctx.fill();
+}
+function rounded(x,y,w,h,r,c){
+ ctx.beginPath();ctx.roundRect(x,y,w,h,r);
+ ctx.fillStyle=c;ctx.fill();
+}
+function line(x,y,x2,y2,c,w=2){
+ ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x2,y2);
+ ctx.strokeStyle=c;ctx.lineWidth=w;ctx.stroke();
+}
+function label(t,x,y,size=12,c='#795740'){
+ ctx.font=`bold ${size}px Arial`;
+ ctx.textAlign='center';ctx.fillStyle=c;ctx.fillText(t,x,y);
+}
+
+function drawTree(x,y,s=1){
+ ctx.save();ctx.translate(x,y);ctx.scale(s,s);
+ ellipse(0,22,34,12,'#a4c58b');rect(-6,2,12,24,'#ad7651');
+ ellipse(-19,-1,24,24,'#55b879');
+ ellipse(13,-10,28,28,'#69c77d');
+ ellipse(27,8,21,21,'#50b977');
+ ellipse(-5,-28,22,22,'#91dc85');
+ ctx.restore();
+}
+function drawFlowers(x,y,s=1){
+ ctx.save();ctx.translate(x,y);ctx.scale(s,s);
+ ellipse(0,7,27,10,'#67bd74');
+ for(let i=0;i<3;i++){
+  const px=(i-1)*18,py=(i%2)*-5;
+  for(let j=0;j<5;j++){
+   let a=j*Math.PI*2/5;
+   ellipse(px+Math.cos(a)*5,py+Math.sin(a)*5,4,4,
+    ['#fff5df','#f5a4ce','#d9c7ff'][i]);
+  }
+  ellipse(px,py,2.5,2.5,'#f2c158');
+ }
+ ctx.restore();
+}
+
+function drawRoads(){
+ rect(0,0,WORLD.w,WORLD.h,'#b4e49b');
+ for(let y=0;y<WORLD.h;y+=90)
+  for(let x=0;x<WORLD.w;x+=100)
+   rect(x,y,98,88,'#f7e4bd');
+
+ for(const p of parks){
+  rounded(p.x,p.y,p.w,p.h,25,'#8dce7e');
+  rounded(p.x+8,p.y+8,p.w-16,p.h-16,22,'#b4e49b');
+  line(p.x+15,p.y+p.h/2,p.x+p.w-15,p.y+p.h/2,'#f7e4bd',22);
+  line(p.x+p.w/2,p.y+15,p.x+p.w/2,p.y+p.h-15,'#f7e4bd',20);
+  label(p.name,p.x+p.w/2,p.y+28,14);
+  for(let i=0;i<p.w/100;i++){
+   drawTree(p.x+35+i*90,p.y+65,.5);
+   drawFlowers(p.x+45+i*80,p.y+p.h-32,.6);
+  }
+ }
+ for(const y of roadsY){
+  rect(0,y-72,WORLD.w,144,'#87949e');
+  rect(0,y-78,WORLD.w,7,'#fff4dd');
+  rect(0,y+71,WORLD.w,7,'#fff4dd');
+  for(let x=0;x<WORLD.w;x+=110)rect(x,y-2,55,4,'#fff4dd');
+ }
+ for(const x of roadsX){
+  rect(x-62,0,124,WORLD.h,'#87949e');
+  rect(x-69,0,7,WORLD.h,'#fff4dd');
+  rect(x+62,0,7,WORLD.h,'#fff4dd');
+  for(let y=0;y<WORLD.h;y+=110)rect(x-2,y,4,55,'#fff4dd');
+ }
+}
+
+function drawHouse(b){
+ const{x,y,w,h,type,name,color,roof}=b;
+ rounded(x+5,y+8,w,h,7,'#a9b69a');
+ rounded(x,y,w,h,7,color);
+ rect(x+3,y+h-9,w-6,9,'#e9c99c');
+
+ if(type==='apt'){
+  rect(x-4,y-8,w+8,10,roof);
+  for(let r=0;r<3;r++)for(let c=0;c<2;c++)
+   rounded(x+12+c*(w-42),y+12+r*31,22,22,3,'#8ccce9');
+  rounded(x+w/2-11,y+h-35,22,35,5,'#b77c58');
+ }else{
+  ctx.beginPath();
+  ctx.moveTo(x-8,y+12);ctx.lineTo(x+w/2,y-27);ctx.lineTo(x+w+8,y+12);
+  ctx.closePath();ctx.fillStyle=roof;ctx.fill();
+  ctx.strokeStyle='#896653';ctx.lineWidth=2;ctx.stroke();
+  rounded(x+9,y+24,23,25,3,'#8ccce9');
+  rounded(x+w-32,y+24,23,25,3,'#8ccce9');
+  rounded(x+w/2-11,y+h-38,22,38,5,'#b77c58');
+ }
+
+ if(['shop','supermarket','market','restaurant','cafe','pharmacy','furniture'].includes(type)){
+  const sc={
+   shop:'#e58d89',supermarket:'#55a982',market:'#e9ad52',
+   restaurant:'#d96855',cafe:'#efa76b',pharmacy:'#4dba91',
+   furniture:'#d88c66'
+  }[type];
+  rect(x-3,y+43,w+6,12,'#fff7e6');
+  for(let i=0;i<5;i++)
+   rect(x+i*w/5,y+43,w/10,17,i%2?'#fff7e6':sc);
+  rounded(x+w/2-44,y-22,88,18,5,sc);
+  label(
+   type==='restaurant'?'QUÁN ĂN':
+   type==='supermarket'?'SIÊU THỊ':
+   type==='cafe'?'CÀ PHÊ':
+   type==='market'?'CHỢ':'CỬA HÀNG',
+   x+w/2,y-9,9,'#fff'
+  );
+ }
+ rounded(x+w/2-48,y+h+2,96,19,6,'#fff9e9');
+ label(name,x+w/2,y+h+15,9);
+
+ if(state.restaurantRented&&Math.abs(b.x-state.shopX)<2&&Math.abs(b.y-state.shopY)<2){
+  rounded(x-12,y-53,w+24,22,8,'#fff0a6');
+  label('📍 QUÁN CỦA BẠN',x+w/2,y-38,11,'#b53b55');
+  line(x+w/2,y-30,x+w/2,y-10,'#e33b66',3);
+ }
+}
+
+function drawCharacter(p,t,isPlayer=false){
+ const step=Math.sin(t*.008+(p.phase||0))*2;
+ ctx.save();ctx.translate(p.x,p.y);
+ ellipse(0,3,15,5,'#7c927a66');
+ line(-5,-15,-6+step,-3,'#e9b894',4);
+ line(5,-15,6-step,-3,'#e9b894',4);
+ rounded(-12+step,-6,13,6,3,p.pants||'#303344');
+ rounded(-step,-6,13,6,3,p.pants||'#303344');
+ rounded(-13+step,-2,14,5,3,'#fffaf2');
+ rounded(-step,-2,14,5,3,'#fffaf2');
+ line(-9,-39,-13,-24,p.skin||'#ffd4b5',6);
+ line(9,-39,13,-24,p.skin||'#ffd4b5',6);
+ rounded(-12,-45,24,29,8,p.shirt||'#e9786e');
+ if(p.gender==='girl'){
+  ellipse(-10,-57,7,16,p.hair||'#54332b');
+  ellipse(10,-57,7,16,p.hair||'#54332b');
+ }
+ ellipse(0,-62,14,18,p.skin||'#ffd4b5');
+ ellipse(0,-77,15,9,p.hair||'#54332b');
+ ellipse(-10,-70,6,9,p.hair||'#54332b');
+ ellipse(10,-72,5,8,p.hair||'#54332b');
+ ellipse(-5,-62,2,3,'#34292b');
+ ellipse(5,-62,2,3,'#34292b');
+ if(isPlayer){
+  rounded(-34,-101,68,15,5,'#1769b0');
+  label('NGƯỜI CHƠI',0,-90,9,'#fff');
+ }
+ ctx.restore();
+}
+
+function drawCar(c){
+ ctx.save();ctx.translate(c.x,c.y);
+ if(c.dir<0)ctx.scale(-1,1);
+ rounded(-20,-9,40,18,5,c.color);
+ rounded(-8,-7,19,14,3,'#c9effa');
+ rounded(-14,-12,10,5,2,'#343a40');
+ rounded(6,-12,10,5,2,'#343a40');
+ rounded(-14,8,10,5,2,'#343a40');
+ rounded(6,8,10,5,2,'#343a40');
+ ctx.restore();
+}
+
+function drawTables(){
+ if(!state.restaurantRented)return;
+ const b=buildings.find(b=>b.x===state.shopX&&b.y===state.shopY);
+ if(!b)return;
+ const count=state.shopTables,cols=5,spacing=29;
+ for(let i=0;i<count;i++){
+  const col=i%cols,row=Math.floor(i/cols);
+  const x=b.x+12+col*spacing,y=b.y+b.h+35+row*38;
+  ellipse(x+4,y+5,13,5,'#8c9e7a66');
+  rounded(x-12,y-9,24,17,4,'#c88e5b');
+  line(x-10,y+5,x-10,y+14,'#8a6043',3);
+  line(x+10,y+5,x+10,y+14,'#8a6043',3);
+  rounded(x-17,y-8,6,15,2,'#e6c29c');
+  rounded(x+11,y-8,6,15,2,'#e6c29c');
+  if(state.level>=5&&i>=5)label('✨',x,y-13,9);
+ }
+}
+
+function update(dt){
+ let dx=0,dy=0;
+ if(keys.left)dx--;
+ if(keys.right)dx++;
+ if(keys.up)dy--;
+ if(keys.down)dy++;
+ if(dx&&dy){dx*=.707;dy*=.707}
+
+ if(!insideShop){
+  const nx=Math.max(15,Math.min(WORLD.w-15,player.x+dx*player.speed*dt));
+  const ny=Math.max(15,Math.min(WORLD.h-15,player.y+dy*player.speed*dt));
+  if(!collides(nx,player.y))player.x=nx;
+  if(!collides(player.x,ny))player.y=ny;
+ }
+
+ for(const n of npcs)
+  n.x=Math.max(20,Math.min(WORLD.w-20,n.x+Math.sin(gameTime*.00045+n.phase)*25*dt));
+
+ for(const c of cars){
+  c.x+=c.speed*c.dir*dt;
+  if(c.dir>0&&c.x>WORLD.w+30)c.x=-30;
+  if(c.dir<0&&c.x<-30)c.x=WORLD.w+30;
+ }
+ for(const p of pets){
+  p.x+=Math.sin(gameTime*.001+p.phase)*12*dt;
+  p.y+=Math.cos(gameTime*.0008+p.phase)*3*dt;
+ }
+
+ updateCustomers(dt);
+ clockMinutes+=dt*2.4;
+ dayTimer+=dt;
+ if(clockMinutes>=1440){
+  clockMinutes=0;state.day++;save();
+  toast('🌞 Bắt đầu ngày '+state.day);
+ }
+ updateHUD();
+}
+
+function collides(x,y){
+ for(const b of buildings){
+  if(state.restaurantRented&&Math.abs(b.x-state.shopX)<2&&Math.abs(b.y-state.shopY)<2){
+   if(x>b.x-30&&x<b.x+b.w+30&&y>b.y-15&&y<b.y+b.h+35)return true;
+  }else if(x>b.x-12&&x<b.x+b.w+12&&y>b.y-14&&y<b.y+b.h+8)return true;
+ }
+ return false;
+}
+
+function updateCustomers(dt){
+ if(!state.restaurantRented||!state.restaurantOpen)return;
+ const b=buildings.find(b=>b.x===state.shopX&&b.y===state.shopY);
+ if(!b)return;
+
+ if(customers.length<Math.min(15,Math.max(3,state.shopTables))&&Math.random()<dt*.7){
+  const i=customers.length;
+  customers.push({
+   x:b.x-60-Math.random()*100,
+   y:b.y+b.h+70+Math.random()*90,
+   tx:b.x+20+(i%5)*29,
+   ty:b.y+b.h+35+Math.floor(i/5)*38,
+   phase:Math.random()*8,eat:0,
+   shirt:npcShirts[i%npcShirts.length],
+   skin:'#ffd4b5',hair:'#54332b',pants:'#303344',
+   gender:i%2?'girl':'boy',mode:'walk'
+  });
+ }
+
+ for(let i=customers.length-1;i>=0;i--){
+  const c=customers[i];
+  if(c.mode==='walk'){
+   const dx=c.tx-c.x,dy=c.ty-c.y,d=Math.hypot(dx,dy);
+   if(d<3){
+    c.mode='eat';c.eat=8+Math.random()*8;
+    state.money+=12000;state.rep++;state.mealsSold++;
+    gainXP(2);toast('🍜 Khách đang ngồi ăn tại quán!');
+   }else{
+    c.x+=dx/d*45*dt;c.y+=dy/d*45*dt;
+   }
+  }else if(c.mode==='eat'){
+   c.eat-=dt;
+   if(c.eat<=0){
+    c.mode='leave';c.tx=b.x+b.w+80;c.ty=b.y+b.h+90;
+   }
+  }else{
+   const dx=c.tx-c.x,dy=c.ty-c.y,d=Math.hypot(dx,dy);
+   if(d<4)customers.splice(i,1);
+   else{c.x+=dx/d*55*dt;c.y+=dy/d*55*dt}
+  }
+ }
+}
+
+function renderMiniMap(){
+ mctx.clearRect(0,0,300,240);
+ mctx.fillStyle='#b4e49b';mctx.fillRect(0,0,300,240);
+ mctx.fillStyle='#87949e';
+ for(const y of roadsY)mctx.fillRect(0,y/10-7,300,14);
+ for(const x of roadsX)mctx.fillRect(x/10-6,0,12,240);
+ mctx.fillStyle='#70c77d';
+ for(const p of parks)mctx.fillRect(p.x/10,p.y/10,p.w/10,p.h/10);
+ mctx.fillStyle='#e58d89';
+ for(const b of buildings)mctx.fillRect(b.x/10,b.y/10,Math.max(1,b.w/10),Math.max(1,b.h/10));
+ if(state.restaurantRented){
+  mctx.fillStyle='#ffcf27';
+  mctx.fillRect(state.shopX/10-2,state.shopY/10-2,8,8);
+ }
+ mctx.fillStyle='#ff0054';
+ mctx.beginPath();mctx.arc(player.x/10,player.y/10,4,0,Math.PI*2);mctx.fill();
+}
+
+function render(){
+ ctx.setTransform(dpr,0,0,dpr,0,0);
+ rect(0,0,cw,ch,'#b8d9e8');
+ const vw=cw/zoom,vh=ch/zoom;
+ camX=Math.max(0,Math.min(WORLD.w-vw,player.x-vw/2));
+ camY=Math.max(0,Math.min(WORLD.h-vh,player.y-vh/2));
+ ctx.setTransform(dpr*zoom,0,0,dpr*zoom,-camX*dpr*zoom,-camY*dpr*zoom);
+
+ drawRoads();
+ for(const b of buildings)drawHouse(b);
+
+ for(let x=35;x<WORLD.w;x+=145)for(let y=90;y<WORLD.h;y+=150){
+  const onRoad=roadsY.some(r=>Math.abs(y-r)<100)||roadsX.some(r=>Math.abs(x-r)<90);
+  const near=buildings.some(b=>x>b.x-40&&x<b.x+b.w+40&&y>b.y-35&&y<b.y+b.h+35);
+  const park=parks.some(p=>x>p.x&&x<p.x+p.w&&y>p.y&&y<p.y+p.h);
+  if(!onRoad&&!near&&!park&&(Math.floor(x*13+y*7)%3===0))drawTree(x,y,.45);
+  if(!onRoad&&!near&&!park&&(Math.floor(x*5+y*11)%5===0))drawFlowers(x+20,y+25,.45);
+ }
+
+ for(const c of cars)drawCar(c);
+ for(const p of pets){
+  ctx.font='24px Arial';ctx.textAlign='center';
+  ctx.fillText(p.type,p.x,p.y+Math.sin(gameTime*.004+p.phase)*3);
+ }
+ for(const n of npcs)
+  if(Math.abs(n.x-player.x)<vw*.8&&Math.abs(n.y-player.y)<vh*.8)
+   drawCharacter(n,gameTime);
+
+ for(const c of customers)drawCharacter(c,gameTime);
+ drawTables();
+ drawCharacter(player,gameTime,true);
+
+ if(state.restaurantRented){
+  const b=buildings.find(b=>b.x===state.shopX&&b.y===state.shopY);
+  if(b&&Math.hypot(player.x-b.x,player.y-b.y)<vw*.9){
+   rounded(b.x-30,b.y+b.h+25,Math.max(130,state.level>=5?230:160),state.level>=5?150:90,'#ffffff20');
+  }
+ }
+ renderMiniMap();
+ ctx.setTransform(dpr,0,0,dpr,0,0);
+ const hour=clockMinutes/60;
+ if(hour<6||hour>=19)rect(0,0,cw,ch,'rgba(25,35,80,.20)');
+}
+
+function loop(now){
+ if(!last)last=now;
+ const dt=Math.min((now-last)/1000,.04);
+ last=now;gameTime+=dt*1000;
+ update(dt);render();
+ requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+function updateHUD(){
+ $('money').textContent=Math.floor(state.money).toLocaleString('vi-VN');
+ $('level').textContent=state.level;
+ $('day').textContent=state.day;
+ $('stock').textContent=Object.values(state.inventory).reduce((a,b)=>a+(Number(b)||0),0);
+ $('rep').textContent=state.rep;
+ $('tableCount').textContent=state.shopTables;
+ $('clock').textContent=String(Math.floor(clockMinutes/60)%24).padStart(2,'0')+':'+String(Math.floor(clockMinutes%60)).padStart(2,'0');
+ $('rentBtn').textContent=!state.restaurantRented?'🏪 Thuê mặt bằng':state.restaurantOpen?'🔒 Đóng quán':'🍜 Mở quán';
+}
+
+function toast(s){
+ const el=$('toast');
+ el.textContent=s;el.style.display='block';
+ clearTimeout(toastTimer);
+ toastTimer=setTimeout(()=>el.style.display='none',2500);
+}
+
+function gainXP(n){
+ state.xp+=n;
+ while(state.xp>=state.level*100){
+  state.xp-=state.level*100;state.level++;
+  toast('🎉 Lên cấp '+state.level+'!');
+  if(state.level>=5&&!state.expanded){
+   state.shopTables+=10;state.expanded=true;
+   toast('🎊 LÊN CẤP 5! Thêm 10 bàn và mở rộng khu quán!');
+  }
+ }
+ save();updateHUD();
+}
+
+function moneyChange(n){
+ state.money+=n;updateHUD();save();
+}
+
+function openPanel(title,description,buttons=[]){
+ modalOpen=true;$('modal').style.display='flex';
+ $('panelTitle').textContent=title;
+ $('panelBody').innerHTML='<p>'+description+'</p>';
+ $('actions').innerHTML='';
+ for(const b of buttons){
+  const el=document.createElement('button');
+  el.className='action';el.textContent=b.label;
+  el.disabled=!!b.disabled;
+  el.onclick=()=>b.run&&b.run();
+  $('actions').appendChild(el);
+ }
+}
+
+function closePanel(){
+ modalOpen=false;$('modal').style.display='none';
+}
+$('close').onclick=closePanel;
+$('modal').onclick=e=>{if(e.target===$('modal'))closePanel()};
+const btn=(label,run,disabled=false)=>({label,run,disabled});
+
+const meals=[
+ ['Cơm trắng',12000,'rice'],['Cơm trứng',20000,'rice'],
+ ['Cơm gà',35000,'meat'],['Phở bò',40000,'meat'],
+ ['Bún bò',38000,'meat'],['Mì xào',30000,'noodles'],
+ ['Bánh mì',20000,'meat'],['Gỏi cuốn',25000,'vegetables']
+];
+const drinks=[
+ ['Trà đá',5000,'water'],['Trà chanh',15000,'sugar'],
+ ['Trà sữa',28000,'milk'],['Cà phê đen',18000,'coffee'],
+ ['Nước cam',22000,'sugar']
+];
+const names={
+ rice:'Gạo',meat:'Thịt',vegetables:'Rau củ',noodles:'Mì và bún',
+ coffee:'Cà phê',milk:'Sữa',sugar:'Đường',water:'Nước',
+ petfood:'Thức ăn thú cưng'
+};
+const prices={
+ rice:12000,meat:30000,vegetables:10000,noodles:15000,
+ coffee:25000,milk:18000,sugar:8000,water:5000,petfood:15000
+};
+
+function openStatus(){
+ openPanel('📋 TRẠNG THÁI',
+ `Ngày ${state.day} • Cấp ${state.level} • XP ${state.xp}/${state.level*100}<br>
+ Tiền: ${state.money.toLocaleString('vi-VN')}đ<br>
+ Uy tín: ${state.rep}<br>
+ Quán: ${state.restaurantRented?'Đã thuê':'Chưa thuê'} • ${state.restaurantOpen?'Đang mở':'Đang đóng'}<br>
+ Bàn ghế: ${state.shopTables}<br>
+ Nhân viên: ${state.staff}<br>
+ Đánh giá: ${state.rating.toFixed(1)}⭐<br>
+ Kho: ${Object.keys(state.inventory).map(k=>(names[k]||k)+': '+(state.inventory[k]||0)).join(' • ')}`,
+ [
+  btn('💾 Lưu game',()=>{save();toast('Đã lưu game!')}),
+  btn('🍜 Quản lý quán',openRestaurant),
+  btn('📦 Kho nguyên liệu',openWarehouse),
+  btn('🪑 Bàn ghế & trang trí',openFurniture),
+  btn('🎵 Nhạc chill',toggleMusic),
+  btn('📍 Tìm quán',findMyShop)
+ ]);
+}
+
+function openRestaurant(){
+ if(!state.restaurantRented){
+  openPanel('🏪 THUÊ MẶT BẰNG',
+   'Thuê một mặt bằng trong thành phố với giá 250.000đ. Sau khi thuê, bấm “Về quán của tôi” để tìm quán.',
+   [btn('🔑 Thuê mặt bằng — 250.000đ',rentShop,state.money<250000)]);
+  return;
+ }
+ openPanel('🍜 QUẢN LÝ QUÁN',
+  `Quán của mày ${state.restaurantOpen?'đang mở cửa':'đang đóng cửa'}.<br>🪑 Có ${state.shopTables} bàn.<br>Khách sẽ đến khi quán mở cửa.`,
+  [
+   btn(state.restaurantOpen?'🔒 Đóng cửa quán':'🔓 Mở cửa đón khách',()=>{
+    state.restaurantOpen=!state.restaurantOpen;
+    save();closePanel();updateHUD();
+    toast(state.restaurantOpen?'🍜 Quán mở cửa, khách bắt đầu đến!':'Đã đóng cửa quán');
+   }),
+   btn('📍 Về quán của tôi',findMyShop),
+   btn('👨‍🍳 Nấu món ăn',openCooking),
+   btn('🥤 Pha đồ uống',openDrinks),
+   btn('💰 Bán món đã nấu',sellCooked),
+   btn('🪑 Mua bàn ghế',openFurniture)
+  ]);
+}
+
+function rentShop(){
+ if(state.money<250000)return toast('Không đủ tiền thuê!');
+ const choices=buildings.filter(b=>['restaurant','cafe','shop'].includes(b.type)&&!b.occupied);
+ if(!choices.length)return toast('Không còn mặt bằng trống!');
+ const b=choices[0];b.occupied=true;
+ state.shopX=b.x;state.shopY=b.y;
+ state.restaurantRented=true;state.shopTables=5;
+ moneyChange(-250000);save();closePanel();updateHUD();
+ player.x=b.x+b.w+55;player.y=b.y+b.h+65;
+ toast('Đã thuê '+b.name+'! Có 5 bàn. Bấm 📍 Về quán của tôi để tìm lại.');
+}
+
+function findMyShop(){
+ if(!state.restaurantRented){toast('Mày chưa thuê mặt bằng!');return}
+ const b=buildings.find(b=>b.x===state.shopX&&b.y===state.shopY);
+ if(!b){toast('Không tìm thấy mặt bằng đã thuê.');return}
+ closePanel();insideShop=false;
+ player.x=b.x+b.w+65;player.y=b.y+b.h+65;
+ camX=Math.max(0,Math.min(WORLD.w-cw/zoom,player.x-cw/zoom/2));
+ camY=Math.max(0,Math.min(WORLD.h-ch/zoom,player.y-ch/zoom/2));
+ toast('📍 Đã đưa mày về '+b.name+' — bảng vàng là quán của mày!');
+}
+
+function openCooking(){
+ openPanel('👨‍🍳 BẾP','Chọn món để chế biến. Cần nguyên liệu tương ứng.',
+  meals.map((m,i)=>btn(m[0]+' — '+m[1].toLocaleString('vi-VN')+'đ',()=>{
+   if(!state.restaurantRented)return toast('Thuê mặt bằng trước!');
+   if((state.inventory[m[2]]||0)<1)return toast('Thiếu '+names[m[2]]+'!');
+   state.inventory[m[2]]--;
+   state.cooked[i]=(state.cooked[i]||0)+1;
+   save();closePanel();toast('Đã nấu '+m[0]);updateHUD();
+  }))
+ );
+}
+
+function openDrinks(){
+ openPanel('🥤 QUẦY PHA CHẾ','Chọn đồ uống để pha.',
+  drinks.map((d,i)=>btn(d[0]+' — '+d[1].toLocaleString('vi-VN')+'đ',()=>{
+   if((state.inventory[d[2]]||0)<1)return toast('Thiếu '+names[d[2]]+'!');
+   state.inventory[d[2]]--;
+   state.drinks[i]=(state.drinks[i]||0)+1;
+   save();closePanel();toast('Đã pha '+d[0]);updateHUD();
+  }))
+ );
+}
+
+function sellCooked(){
+ if(!state.restaurantRented)return openRestaurant();
+ if(!state.restaurantOpen)return toast('Mở cửa quán trước!');
+ const mi=Object.keys(state.cooked).find(k=>state.cooked[k]>0);
+ const di=Object.keys(state.drinks).find(k=>state.drinks[k]>0);
+ if(mi===undefined&&di===undefined)return toast('Chưa có món nào được nấu hoặc pha!');
+ let earned=0;
+ if(mi!==undefined){
+  earned+=meals[+mi][1];state.cooked[mi]--;
+  state.mealsSold++;state.rep++;
+ }
+ if(di!==undefined){
+  earned+=drinks[+di][1];state.drinks[di]--;
+  state.drinksSold++;state.rep++;
+ }
+ moneyChange(earned);gainXP(15);save();
+ toast('Bán hàng thành công! +'+earned.toLocaleString('vi-VN')+'đ');
+}
+
+function openWarehouse(){
+ openPanel('📦 KHO NGUYÊN LIỆU',
+  Object.keys(state.inventory).map(k=>(names[k]||k)+': '+state.inventory[k]).join('<br>'),
+  Object.keys(prices).map(k=>btn('Mua '+names[k]+' — '+prices[k].toLocaleString('vi-VN')+'đ',()=>{
+   if(state.money<prices[k])return toast('Không đủ tiền!');
+   moneyChange(-prices[k]);
+   state.inventory[k]=(state.inventory[k]||0)+1;
+   save();closePanel();toast('Đã mua '+names[k]);
+  }))
+ );
+}
+
+function openMarket(){openWarehouse()}
+
+function openFurniture(){
+ openPanel('🪑 BÀN GHẾ & TRANG TRÍ',
+  `Số bàn hiện tại: ${state.shopTables}. Ban đầu có 5 bàn; khi đạt cấp 5, game tự thêm 10 bàn và mở rộng khu quán.`,
+  [
+   btn('🪑 Mua thêm 1 bàn — 80.000đ',()=>{
+    if(!state.restaurantRented)return toast('Thuê quán trước!');
+    if(state.money<80000)return toast('Không đủ tiền!');
+    moneyChange(-80000);state.shopTables++;save();closePanel();toast('Đã thêm 1 bàn!');
+   }),
+   btn('🌷 Chậu hoa — 25.000đ',()=>{
+    if(state.money<25000)return toast('Không đủ tiền!');
+    moneyChange(-25000);state.decor++;save();closePanel();toast('Đã trang trí quán!');
+   })
+  ]);
+}
+
+function openStaff(){
+ openPanel('👩‍💼 NHÂN VIÊN',
+  `Nhân viên: ${state.staff}. Mở khóa tuyển nhân viên từ cấp 5.`,
+  [
+   btn('🧑‍🍳 Thuê nhân viên — 120.000đ',()=>{
+    if(state.level<5)return toast('Cần lên cấp 5!');
+    if(state.money<120000)return toast('Không đủ tiền!');
+    moneyChange(-120000);state.staff++;gainXP(5);
+    save();closePanel();toast('Đã thuê nhân viên!');
+   },state.level<5)
+  ]);
+}
+
+function buildingActions(b){
+ if(state.restaurantRented&&b.x===state.shopX&&b.y===state.shopY)return openRestaurant();
+ if(['restaurant','cafe','shop'].includes(b.type))
+  return openPanel('🏪 '+b.name,'Đây là mặt bằng kinh doanh. Mày có thể thuê một mặt bằng trống.',
+   [btn('🔑 Thuê mặt bằng',rentShop)]);
+ if(b.type==='market'||b.type==='supermarket')return openMarket();
+ if(b.type==='furniture')return openFurniture();
+ return openPanel('🏡 '+b.name,'Một công trình trong thành phố.',
+  [btn('📋 Trạng thái',openStatus)]);
+}
+
+function nearestThing(){
+ let best=null,dist=Infinity;
+ for(const b of buildings){
+  const d=Math.hypot(player.x-(b.x+b.w/2),player.y-(b.y+b.h+5));
+  if(d<dist){dist=d;best={kind:'building',item:b,d}}
+ }
+ for(const n of npcs){
+  const d=Math.hypot(player.x-n.x,player.y-n.y);
+  if(d<dist){dist=d;best={kind:'npc',item:n,d}}
+ }
+ for(const p of pets){
+  const d=Math.hypot(player.x-p.x,player.y-p.y);
+  if(d<dist){dist=d;best={kind:'pet',item:p,d}}
+ }
+ return best;
+}
+
+function interact(){
+ const t=nearestThing();
+ if(!t||t.d>125)return toast('Đi lại gần nhà, cửa hàng hoặc NPC rồi tương tác nhé!');
+ if(t.kind==='building')return buildingActions(t.item);
+ if(t.kind==='pet')
+  return openPanel(t.item.type+' Thú cưng','Một người bạn đáng yêu trong khu phố.',
+   [btn('❤️ Vuốt ve',()=>{
+    state.rep++;gainXP(2);closePanel();toast('Thú cưng vui vẻ! +1 uy tín');
+   })]);
+ openPanel('💬 Người dân','Chào mày! Chúc mày buôn may bán đắt nhé!',
+  [btn('🛍️ Mua nguyên liệu',openMarket),btn('📋 Trạng thái',openStatus)]);
+}
+
+function toggleMusic(){
+ if(musicOn){
+  musicOn=false;
+  if(musicTimer)clearInterval(musicTimer);
+  musicTimer=null;
+  $('musicBtn').textContent='🎵 Nhạc chill: Tắt';
+  toast('Đã tắt nhạc chill');return;
+ }
+ const AC=window.AudioContext||window.webkitAudioContext;
+ if(!AC){toast('Trình duyệt không hỗ trợ nhạc nền');return}
+ try{
+  audioCtx=audioCtx||new AC();audioCtx.resume();
+  musicOn=true;$('musicBtn').textContent='🎵 Nhạc chill: Bật';
+  musicStep=0;
+  const notes=[261.63,329.63,392,329.63,293.66,349.23,440,349.23,261.63,329.63,392,523.25,440,392,329.63,293.66];
+  function playNote(){
+   if(!musicOn||!audioCtx)return;
+   const now=audioCtx.currentTime,f=notes[musicStep%notes.length];
+   musicStep++;
+   const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();
+   osc.type='sine';osc.frequency.setValueAtTime(f,now);
+   gain.gain.setValueAtTime(.0001,now);
+   gain.gain.exponentialRampToValueAtTime(.045,now+.08);
+   gain.gain.exponentialRampToValueAtTime(.0001,now+.75);
+   osc.connect(gain);gain.connect(audioCtx.destination);
+   osc.start(now);osc.stop(now+.8);
+
+   if(musicStep%4===0){
+    const bass=audioCtx.createOscillator(),bg=audioCtx.createGain();
+    bass.type='triangle';bass.frequency.value=f/2;
+    bg.gain.setValueAtTime(.0001,now);
+    bg.gain.exponentialRampToValueAtTime(.025,now+.1);
+    bg.gain.exponentialRampToValueAtTime(.0001,now+.9);
+    bass.connect(bg);bg.connect(audioCtx.destination);
+    bass.start(now);bass.stop(now+.95);
+   }
+  }
+  playNote();musicTimer=setInterval(playNote,650);
+  toast('🎵 Đang phát nhạc chill');
+ }catch(e){
+  musicOn=false;toast('Không thể bật nhạc trên trình duyệt này');
+ }
+}
+
+$('act').onclick=interact;
+$('menuBtn').onclick=openStatus;
+$('marketBtn').onclick=openMarket;
+$('staffBtn').onclick=openStaff;
+$('rentBtn').onclick=openRestaurant;
+$('sellBtn').onclick=sellCooked;
+$('findBtn').onclick=findMyShop;
+$('musicBtn').onclick=toggleMusic;
+
+addEventListener('keydown',e=>{
+ const m={
+  ArrowUp:'up',w:'up',ArrowDown:'down',s:'down',
+  ArrowLeft:'left',a:'left',ArrowRight:'right',d:'right'
+ };
+ if(m[e.key]){
+  keys[m[e.key]]=true;e.preventDefault();
+ }
+ if((e.key===' '||e.key==='Enter')&&!modalOpen)interact();
+ if(e.key==='Escape')closePanel();
+});
+addEventListener('keyup',e=>{
+ const m={
+  ArrowUp:'up',w:'up',ArrowDown:'down',s:'down',
+  ArrowLeft:'left',a:'left',ArrowRight:'right',d:'right'
+ };
+ if(m[e.key])keys[m[e.key]]=false;
+});
+addEventListener('blur',()=>Object.keys(keys).forEach(k=>keys[k]=false));
+
+document.querySelectorAll('[data-k]').forEach(el=>{
+ const k=el.dataset.k;
+ el.addEventListener('pointerdown',e=>{
+  e.preventDefault();keys[k]=true;
+  try{el.setPointerCapture(e.pointerId)}catch(_){}
+ });
+ const stop=e=>{e.preventDefault();keys[k]=false};
+ el.addEventListener('pointerup',stop);
+ el.addEventListener('pointercancel',stop);
+ el.addEventListener('lostpointercapture',stop);
+});
+
+updateHUD();
+})();
+</script>
+</body>
+</html>
