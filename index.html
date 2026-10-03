@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buôn Gì Bán - Quán Ăn 3D (Thời Tiết & Thời Gian)</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+        #ui {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            pointer-events: none;
+            backdrop-filter: blur(5px);
+        }
+        h1 { margin: 0 0 8px 0; font-size: 20px; color: #ffd700; }
+        .stat { font-size: 15px; margin: 4px 0; }
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            text-align: center;
+            pointer-events: none;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            border: 1px solid black;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        <h1>🍜 Buôn Gì Bán - Quán Ăn 3D</h1>
+        <div class="stat">💰 Tiền vốn: <span id="money">100</span>$</div>
+        <div class="stat">⭐ Uy tín: <span id="reputation">50</span>/100</div>
+        <div class="stat">⏰ Giờ: <span id="time-display">08:00</span></div>
+        <div class="stat">🌤️ Thời tiết: <span id="weather-display">Nắng đẹp</span></div>
+    </div>
+    <div id="crosshair"></div>
+    <div id="instructions">Dùng phím <b>W, A, S, D</b> để di chuyển • Click vào bàn có khách để <b>Phục vụ</b></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        let scene, camera, renderer;
+        let ws;
+        let playerId = null;
+        let playersMeshes = {};
+        let tablesMeshes = [];
+        let npcsMeshes = {};
+
+        // Hạt hiệu ứng thời tiết (mưa, tuyết)
+        let weatherParticles = null;
+        let currentWeather = 'SUNNY';
+
+        const moveState = { forward: false, backward: false, left: false, right: false };
+        const myPosition = { x: 0, z: 8 };
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a2e);
+            scene.fog = new THREE.FogExp2(0x1a1a2e, 0.03);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            document.body.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xfffaed, 0.8);
+            dirLight.position.set(10, 20, 10);
+            dirLight.castShadow = true;
+            scene.add(dirLight);
+
+            // Sàn nhà hàng
+            const floorGeo = new THREE.PlaneGeometry(24, 24);
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.8 });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            // Tường quán
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0xf5deb3 });
+            const backWall = new THREE.Mesh(new THREE.BoxGeometry(24, 6, 0.5), wallMat);
+            backWall.position.set(0, 3, -12);
+            scene.add(backWall);
+
+            const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6, 24), wallMat);
+            leftWall.position.set(-12, 3, 0);
+            scene.add(leftWall);
+
+            const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6, 24), wallMat);
+            rightWall.position.set(12, 3, 0);
+            scene.add(rightWall);
+
+            // Quầy bếp
+            const counterMat = new THREE.MeshStandardMaterial({ color: 0x4e3629 });
+            const counter = new THREE.Mesh(new THREE.BoxGeometry(6, 1.2, 2), counterMat);
+            counter.position.set(0, 0.6, -10);
+            scene.add(counter);
+
+            // Bàn ăn
+            const tableCoords = [
+                { id: 1, x: -6, z: -2 },
+                { id: 2, x: -6, z: 2 },
+                { id: 3, x: 6, z: -2 },
+                { id: 4, x: 6, z: 2 }
+            ];
+
+            tableCoords.forEach(tc => {
+                const group = new THREE.Group();
+                const tableTop = new THREE.Mesh(new THREE.BoxGeometry(2, 0.1, 2), new THREE.MeshStandardMaterial({ color: 0xdeb887 }));
+                tableTop.position.y = 1;
+                group.add(tableTop);
+
+                const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1), new THREE.MeshStandardMaterial({ color: 0x333 }));
+                leg.position.y = 0.5;
+                group.add(leg);
+
+                group.position.set(tc.x, 0, tc.z);
+                scene.add(group);
+                tablesMeshes.push({ id: tc.id, mesh: group });
+            });
+
+            // Khởi tạo hệ thống hạt thời tiết ban đầu
+            createWeatherSystem('SUNNY');
+
+            window.addEventListener('keydown', (e) => handleKey(e, true));
+            window.addEventListener('keyup', (e) => handleKey(e, false));
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('click', onClick);
+
+            connectWebSocket();
+            animate();
+        }
+
+        // Tạo hiệu ứng hạt mưa / tuyết / gió
+        function createWeatherSystem(type) {
+            if (weatherParticles) {
+                scene.remove(weatherParticles);
+                weatherParticles.geometry.dispose();
+                weatherParticles.material.dispose();
+                weatherParticles = null;
+            }
+
+            currentWeather = type;
+            let count = 0;
+            let color = 0xffffff;
+            let size = 0.1;
+
+            if (type === 'RAINY' || type === 'STORM') {
+                count = type === 'STORM' ? 2000 : 1000;
+                color = 0xaaaaee;
+                size = 0.08;
+            } else if (type === 'SNOWY') {
+                count = 1000;
+                color = 0xffffff;
+                size = 0.15;
+            } else if (type === 'WINDY') {
+                count = 400;
+                color = 0xddddcc;
+                size = 0.1;
+            } else {
+                return; // SUNNY không cần hạt
+            }
+
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(count * 3);
+
+            for (let i = 0; i < count * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 30;
+                positions[i + 1] = Math.random() * 15;
+                positions[i + 2] = (Math.random() - 0.5) * 30;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const material = new THREE.PointsMaterial({ color: color, size: size, transparent: true, opacity: 0.7 });
+            weatherParticles = new THREE.Points(geometry, material);
+            scene.add(weatherParticles);
+        }
+
+        function updateWeatherVisuals(type) {
+            if (currentWeather !== type) {
+                createWeatherSystem(type);
+            }
+
+            // Đổi màu bầu không khí theo thời tiết
+            if (type === 'STORM') {
+                scene.background.setHex(0x0f0f1a);
+                scene.fog.color.setHex(0x0f0f1a);
+            } else if (type === 'RAINY') {
+                scene.background.setHex(0x151b22);
+                scene.fog.color.setHex(0x151b22);
+            } else if (type === 'SNOWY') {
+                scene.background.setHex(0x222831);
+                scene.fog.color.setHex(0x222831);
+            } else {
+                scene.background.setHex(0x1a1a2e);
+                scene.fog.color.setHex(0x1a1a2e);
+            }
+        }
+
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}`);
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'INIT' || data.type === 'STATE_UPDATE') {
+                    updateGameState(data.state);
+                }
+            };
+        }
+
+        function updateGameState(state) {
+            document.getElementById('money').innerText = state.money;
+            document.getElementById('reputation').innerText = state.reputation;
+
+            // Hiển thị giờ (Định dạng HH:MM)
+            const hours = Math.floor(state.time);
+            const minutes = Math.floor((state.time - hours) * 60);
+            document.getElementById('time-display').innerText = 
+                `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+
+            // Hiển thị thời tiết Tiếng Việt
+            const weatherNames = {
+                'SUNNY': '☀️ Nắng đẹp',
+                'RAINY': '🌧️ Mưa phùn',
+                'SNOWY': '❄️ Tuyết rơi',
+                'WINDY': '💨 Gió lộng',
+                'STORM': '⚡ Bão lớn'
+            };
+            document.getElementById('weather-display').innerText = weatherNames[state.weather] || state.weather;
+            updateWeatherVisuals(state.weather);
+
+            // Cập nhật người chơi khác
+            const activePlayerIds = Object.keys(state.players);
+            for (let id in playersMeshes) {
+                if (!activePlayerIds.includes(id)) {
+                    scene.remove(playersMeshes[id]);
+                    delete playersMeshes[id];
+                }
+            }
+
+            for (let id in state.players) {
+                if (id === playerId) continue;
+                let pData = state.players[id];
+                if (!playersMeshes[id]) {
+                    const pMesh = new THREE.Mesh(
+                        new THREE.CapsuleGeometry(0.4, 1, 4, 8),
+                        new THREE.MeshStandardMaterial({ color: pData.color })
+                    );
+                    pMesh.position.y = 1;
+                    scene.add(pMesh);
+                    playersMeshes[id] = pMesh;
+                }
+                playersMeshes[id].position.x = pData.x;
+                playersMeshes[id].position.z = pData.z;
+            }
+
+            // Cập nhật NPC khách hàng
+            const activeNpcIds = state.npcs.map(n => n.id);
+            for (let id in npcsMeshes) {
+                if (!activeNpcIds.includes(Number(id))) {
+                    scene.remove(npcsMeshes[id]);
+                    delete npcsMeshes[id];
+                }
+            }
+
+            state.npcs.forEach(npc => {
+                if (!npcsMeshes[npc.id]) {
+                    const npcGroup = new THREE.Group();
+                    const body = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.5, 8), new THREE.MeshStandardMaterial({ color: 0x4e9f3d }));
+                    body.position.y = 0.75;
+                    npcGroup.add(body);
+                    scene.add(npcGroup);
+                    npcsMeshes[npc.id] = npcGroup;
+                }
+                npcsMeshes[npc.id].position.x = npc.x;
+                npcsMeshes[npc.id].position.z = npc.z;
+            });
+        }
+
+        function handleKey(e, isDown) {
+            switch (e.code) {
+                case 'KeyW': moveState.forward = isDown; break;
+                case 'KeyS': moveState.backward = isDown; break;
+                case 'KeyA': moveState.left = isDown; break;
+                case 'KeyD': moveState.right = isDown; break;
+            }
+        }
+
+        function onClick() {
+            tablesMeshes.forEach(t => {
+                const dist = Math.hypot(myPosition.x - t.mesh.position.x, myPosition.z - t.mesh.position.z);
+                if (dist < 3.5) {
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({ type: 'SERVE', tableId: t.id }));
+                    }
+                }
+            });
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const speed = 0.1;
+            if (moveState.forward) myPosition.z -= speed;
+            if (moveState.backward) myPosition.z += speed;
+            if (moveState.left) myPosition.x -= speed;
+            if (moveState.right) myPosition.x += speed;
+
+            myPosition.x = Math.max(-11, Math.min(11, myPosition.x));
+            myPosition.z = Math.max(-11, Math.min(11, myPosition.z));
+
+            if (ws && ws.readyState === WebSocket.OPEN && playerId) {
+                ws.send(JSON.stringify({ type: 'MOVE', x: myPosition.x, z: myPosition.z }));
+            }
+
+            // Hiệu ứng rơi của hạt thời tiết (Mưa/Tuyết)
+            if (weatherParticles) {
+                const positions = weatherParticles.geometry.attributes.position.array;
+                for (let i = 1; i < positions.length; i += 3) {
+                    positions[i] -= (currentWeather === 'SNOWY' ? 0.05 : 0.4); // Tuyết rơi chậm, mưa/bão rơi nhanh
+                    if (positions[i] < 0) positions[i] = 15; // Reset lên cao khi chạm đất
+                }
+                weatherParticles.geometry.attributes.position.needsUpdate = true;
+            }
+
+            camera.position.x = myPosition.x;
+            camera.position.y = 6;
+            camera.position.z = myPosition.z + 5;
+            camera.lookAt(myPosition.x, 1, myPosition.z);
+
+            renderer.render(scene, camera);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
