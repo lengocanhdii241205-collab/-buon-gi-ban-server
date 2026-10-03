@@ -1,0 +1,46 @@
+// =================================================================
+// [MODULE 1: INDEX] CƠ SỞ DỮ LIỆU CHỈ MỤC MÓN ĂN CHUẨN ĐỒ HỌA CAO
+// =================================================================
+
+export const SystemFoodMenuDatabase = [
+    { 
+        foodIndex: 101, 
+        foodName: "Gourmet Pizza", 
+        cookTime: 2.5, 
+        price: 45, 
+        exp: 15, 
+        color3d: 0xffa500 // Mã màu 3D của món ăn
+    },
+    { 
+        foodIndex: 102, 
+        foodName: "Wagyu Burger", 
+        cookTime: 1.8, 
+        price: 60, 
+        exp: 20, 
+        color3d: 0x8b4513 
+    },
+    { 
+        foodIndex: 103, 
+        foodName: "Luxury Sushi", 
+        cookTime: 3.5, 
+        price: 75, 
+        exp: 25, 
+        color3d: 0x00ff7f 
+    },
+    { 
+        foodIndex: 104, 
+        foodName: "Cyber Noodles", 
+        cookTime: 1.2, 
+        price: 40, 
+        exp: 10, 
+        color3d: 0x00ffff 
+    }
+];
+
+/**
+ * Hàm tìm kiếm thông tin chi tiết của một món ăn từ mã Index
+ * @param {number} index 
+ */
+export function findFoodDataByIndex(index) {
+    return SystemFoodMenuDatabase.find(item => item.foodIndex === index) || null;
+}
